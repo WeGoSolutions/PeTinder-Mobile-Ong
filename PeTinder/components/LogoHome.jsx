@@ -4,7 +4,7 @@ export default function LogoHome() {
     return (
         <View style={styles.container}>
             <View style={styles.row}>
-                <Image source={require('../assets/Logo.png')} style={styles.logo} />
+                <Image source={require('../assets/Logo.svg')} style={styles.logo} />
                 <Text style={styles.titulo}>PeTinder</Text>
             </View>
 
@@ -18,8 +18,7 @@ export default function LogoHome() {
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
-        marginTop: 16,
-        zIndex: 1,
+        marginTop: '30%',
     },
     row: {
         flexDirection: 'row',

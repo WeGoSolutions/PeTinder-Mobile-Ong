@@ -9,6 +9,7 @@ const DynamicButton = ({
     isLoading = false,
     children,
     style,
+    textStyle,
 }) => {
     const buttonStyles = [
         styles.button,
@@ -20,6 +21,7 @@ const DynamicButton = ({
     const textStyles = [
         styles.buttonText,
         styles[`${variant}ButtonText`],
+        textStyle,
     ];
 
     const loaderColor = '#1A1A1A';
@@ -101,6 +103,11 @@ const styles = StyleSheet.create({
         marginTop: 8,
         paddingVertical: 12,
     },
+    needHelpButton: {
+        backgroundColor: 'transparent',
+        marginTop: 8,
+        paddingVertical: 12,
+    },
     disabledButton: {
         opacity: 0.6,
     },
@@ -116,7 +123,11 @@ const styles = StyleSheet.create({
         color: '#1A1A1A',
     },
     forgotPasswordButtonText: {
-        fontSize: 14,
+        fontSize: 18,
+        color: '#1A1A1A',
+    },
+    needHelpButtonText: {
+        fontSize: 18,
         color: '#1A1A1A',
     },
 });
