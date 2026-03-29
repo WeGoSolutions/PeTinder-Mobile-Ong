@@ -64,7 +64,7 @@ export default function Home() {
                     <DynamicButton
                         variant="forgotPasswordButton"
                         textStyle={styles.verMaisText}
-                        onPress={() => router.push('/ong/interessados')}
+                        onPress={() => router.replace('/ong/interessados')}
                     >
                         Ver mais
                     </DynamicButton>
