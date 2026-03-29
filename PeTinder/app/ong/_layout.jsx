@@ -32,7 +32,7 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
     );
 }
 
-function ConfiguracoesHeader() {
+function SecondaryHeader({ title }) {
     const router = useRouter();
 
     return (
@@ -46,7 +46,7 @@ function ConfiguracoesHeader() {
                 <Ionicons name="chevron-back" size={28} color="#000000" />
             </Pressable>
 
-            <Text style={styles.headerName}>Configurações</Text>
+            <Text style={styles.headerName}>{title}</Text>
 
             <View style={styles.headerRightSpacer} />
         </View>
@@ -58,11 +58,23 @@ export default function OngTabsLayout() {
         <Tabs
             screenOptions={({ route }) => ({
                 headerShown: true,
-                header: () => (route.name === 'configuracoes' ? <ConfiguracoesHeader /> : <OngHeader />),
+                header: () => {
+                    if (route.name === 'configuracoes') {
+                        return <SecondaryHeader title="Configuracoes" />;
+                    }
+                    if (route.name === 'chat') {
+                        const chatUserName =
+                            typeof route.params?.userName === 'string' && route.params.userName.trim().length > 0
+                                ? route.params.userName
+                                : 'Chat';
+                        return <SecondaryHeader title={chatUserName} />;
+                    }
+                    return <OngHeader />;
+                },
                 tabBarActiveTintColor: '#000000',
                 tabBarInactiveTintColor: '#000000',
                 tabBarStyle: {
-                    display: route.name === 'configuracoes' ? 'none' : 'flex',
+                    display: route.name === 'configuracoes' || route.name === 'chat' ? 'none' : 'flex',
                     height: 80,
                     paddingBottom: 8,
                     paddingTop: 8,
@@ -113,6 +125,13 @@ export default function OngTabsLayout() {
             />
             <Tabs.Screen
                 name="configuracoes"
+                options={{
+                    href: null,
+                    title: '',
+                }}
+            />
+            <Tabs.Screen
+                name="chat"
                 options={{
                     href: null,
                     title: '',
