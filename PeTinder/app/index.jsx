@@ -9,10 +9,15 @@ import { useState } from 'react';
 import LogoHome from '../components/LogoHome';
 import DynamicInput from '../components/DynamicInput';
 import DynamicButton from '../components/DynamicButton';
+import { useRouter } from 'expo-router'
 
 export default function Home() {
+  const router = useRouter()
+
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+
+
 
   return (
     <KeyboardAvoidingView
@@ -51,7 +56,7 @@ export default function Home() {
           <View style={styles.buttonContainer}>
             <DynamicButton
               variant="secondary"
-              onPress={() => console.log('Sign up')}
+              onPress={() => router.push('/ong')}
             >
               Entrar
             </DynamicButton>
@@ -63,12 +68,6 @@ export default function Home() {
               >
                 Esqueceu a senha?
               </DynamicButton>
-              {/* <DynamicButton
-                variant="needHelp"
-                onPress={() => console.log('Forgot password')}
-              >
-                Precisa de Ajuda?
-              </DynamicButton> */}
             </View>
           </View>
         </View>
