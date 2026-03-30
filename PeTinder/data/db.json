@@ -1,0 +1,76 @@
+{
+  "ong": {
+    "id": 1,
+    "name": "Patinhas Felizes",
+    "email": "contato@patinhasfelizes.org"
+  },
+  "pets": [
+    {
+      "id": 1,
+      "name": "Max",
+      "likes": 200,
+      "adopted": true
+    },
+    {
+      "id": 2,
+      "name": "Luna",
+      "likes": 123,
+      "adopted": false
+    },
+    {
+      "id": 3,
+      "name": "Bob",
+      "likes": 80,
+      "adopted": true
+    },
+    {
+      "id": 4,
+      "name": "Nina",
+      "likes": 95,
+      "adopted": false
+    },
+    {
+      "id": 5,
+      "name": "Thor",
+      "likes": 67,
+      "adopted": true
+    },
+    {
+      "id": 6,
+      "name": "Mel",
+      "likes": 45,
+      "adopted": false
+    },
+    {
+      "id": 7,
+      "name": "Rex",
+      "likes": 156,
+      "adopted": true
+    },
+    {
+      "id": 8,
+      "name": "Bella",
+      "likes": 88,
+      "adopted": false
+    },
+    {
+      "id": 9,
+      "name": "Simba",
+      "likes": 72,
+      "adopted": true
+    },
+    {
+      "id": 10,
+      "name": "Pipoca",
+      "likes": 34,
+      "adopted": true
+    }
+    ,
+    {
+      "id": 11,
+      "name": "Cuca beludo",
+      "likes": 134,
+      "adopted": false
+    }
+  ]
+}
