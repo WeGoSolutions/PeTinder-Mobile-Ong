@@ -1,12 +1,19 @@
-import { Tabs, useRouter } from 'expo-router';
+import { Tabs, usePathname, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useOngInfo } from '../../services/petService';
 
 const DEFAULT_ONG_NAME = 'ONG';
 const DEFAULT_ONG_IMAGE_URI = null;
 
 function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE_URI }) {
     const router = useRouter();
+    const pathname = usePathname();
+    const { ong } = useOngInfo();
+    const displayName =
+        typeof ong?.name === 'string' && ong.name.trim().length > 0
+            ? ong.name
+            : ongName;
 
     return (
         <View style={styles.headerWrapper}>
@@ -18,11 +25,18 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
                         <Ionicons name="business-outline" size={20} color="#80465D" />
                     )}
                 </View>
-                <Text style={styles.headerName}>Olá, {ongName}!</Text>
+                <Text style={styles.headerName}>Olá, {displayName}!</Text>
             </View>
             <Pressable
                 style={styles.settingsButton}
-                onPress={() => router.push('/ong/configuracoes')}
+                onPress={() =>
+                    router.push({
+                        pathname: '/ong/configuracoes',
+                        params: {
+                            from: pathname,
+                        },
+                    })
+                }
                 accessibilityRole="button"
                 accessibilityLabel="Ir para configuracoes"
             >
@@ -32,14 +46,23 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
     );
 }
 
-function SecondaryHeader({ title }) {
+function SecondaryHeader({ title, backTo }) {
     const router = useRouter();
+
+    const handleBack = () => {
+        if (typeof backTo === 'string' && backTo.trim().length > 0) {
+            router.replace(backTo);
+            return;
+        }
+
+        router.back();
+    };
 
     return (
         <View style={styles.headerWrapper}>
             <Pressable
                 style={styles.backButton}
-                onPress={() => router.back()}
+                onPress={handleBack}
                 accessibilityRole="button"
                 accessibilityLabel="Voltar"
             >
@@ -60,7 +83,11 @@ export default function OngTabsLayout() {
                 headerShown: true,
                 header: () => {
                     if (route.name === 'configuracoes') {
-                        return <SecondaryHeader title="Configuracoes" />;
+                        const settingsBackTo =
+                            typeof route.params?.from === 'string' && route.params.from.trim().length > 0
+                                ? route.params.from
+                                : '/ong';
+                        return <SecondaryHeader title="Configuracoes" backTo={settingsBackTo} />;
                     }
                     if (route.name === 'chat') {
                         const chatUserName =
@@ -90,7 +117,12 @@ export default function OngTabsLayout() {
                     } else if (route.name === 'interessados') {
                         iconName = focused ? 'people' : 'people-outline';
                     } else if (route.name === 'dashboards') {
-                        iconName = focused ? 'grid' : 'grid-outline';
+                        return (
+                            <Image
+                                source={require('../../assets/icon-chart.svg')}
+                                style={[styles.tabChartIcon, !focused && styles.tabChartIconInactive]}
+                            />
+                        );
                     } else {
                         iconName = focused ? 'paw' : 'paw-outline';
                     }
@@ -195,5 +227,12 @@ const styles = StyleSheet.create({
     avatarImage: {
         width: '100%',
         height: '100%',
+    },
+    tabChartIcon: {
+        width: 30,
+        height: 30,
+    },
+    tabChartIconInactive: {
+        opacity: 0.7,
     },
 });
