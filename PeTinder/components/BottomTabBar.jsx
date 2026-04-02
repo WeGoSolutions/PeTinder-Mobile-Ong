@@ -1,4 +1,5 @@
-import { View, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, scaleHeight, scaleWidth, layout, iconSizes } from '../constants/theme';
 
 export default function BottomTabBar({ 
@@ -6,10 +7,10 @@ export default function BottomTabBar({
   onTabPress 
 }) {
   const tabs = [
-    { id: 'home', icon: require('../assets/icon-home.svg') },
-    { id: 'users', icon: require('../assets/icon-users.svg') },
-    { id: 'chart', icon: require('../assets/icon-chart.svg') },
-    { id: 'pet', icon: require('../assets/icon-pet.svg') },
+    { id: 'home', activeIcon: 'home', inactiveIcon: 'home-outline' },
+    { id: 'users', activeIcon: 'people', inactiveIcon: 'people-outline' },
+    { id: 'chart', activeIcon: 'stats-chart', inactiveIcon: 'stats-chart-outline' },
+    { id: 'pet', activeIcon: 'paw', inactiveIcon: 'paw-outline' },
   ];
 
   const handleTabPress = (tabId) => {
@@ -36,11 +37,13 @@ export default function BottomTabBar({
               styles.iconContainer,
               isActive && styles.iconContainerActive
             ]}>
-              <Image 
-                source={tab.icon}
+              <Ionicons
+                name={isActive ? tab.activeIcon : tab.inactiveIcon}
+                size={scaleWidth(iconSizes.tabIcon)}
+                color={colors.black}
                 style={[
                   styles.icon,
-                  isActive && styles.iconActive
+                  isActive && styles.iconActive,
                 ]}
               />
             </View>
@@ -74,12 +77,9 @@ const styles = StyleSheet.create({
     // Active state visual indicator
   },
   icon: {
-    width: scaleWidth(iconSizes.tabIcon),
-    height: scaleWidth(iconSizes.tabIcon),
     opacity: 0.6,
   },
   iconActive: {
     opacity: 1,
-    tintColor: colors.black,
   },
 });

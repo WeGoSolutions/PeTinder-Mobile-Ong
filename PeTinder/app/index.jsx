@@ -6,6 +6,7 @@ import {
   ScrollView
 } from 'react-native';
 import { useState } from 'react';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import LogoHome from '../components/LogoHome';
 import DynamicInput from '../components/DynamicInput';
 import DynamicButton from '../components/DynamicButton';
@@ -20,63 +21,69 @@ export default function Home() {
 
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.containerHome}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 24 : 0}
-    >
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.containerHome}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 16 : 0}
       >
-        <LogoHome />
-        <View style={styles.container}>
-          <View>
-            <DynamicInput
-              type="email"
-              label="Email"
-              placeholder="Email"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="email"
-              value={email}
-              onChangeText={setEmail}
-            />
-            <DynamicInput
-              type="password"
-              label="Senha"
-              placeholder="Senha"
-              autoCapitalize="none"
-              autoComplete="password"
-              value={senha}
-              onChangeText={setSenha}
-            />
-          </View>
-          <View style={styles.buttonContainer}>
-            <DynamicButton
-              variant="secondary"
-              onPress={() => router.push('/ong')}
-            >
-              Entrar
-            </DynamicButton>
-            <View style={styles.bottomButtons}>
+        <ScrollView
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <LogoHome />
+          <View style={styles.container}>
+            <View>
+              <DynamicInput
+                type="email"
+                label="Email"
+                placeholder="Email"
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoComplete="email"
+                value={email}
+                onChangeText={setEmail}
+              />
+              <DynamicInput
+                type="password"
+                label="Senha"
+                placeholder="Senha"
+                autoCapitalize="none"
+                autoComplete="password"
+                value={senha}
+                onChangeText={setSenha}
+              />
+            </View>
+            <View style={styles.buttonContainer}>
               <DynamicButton
-                variant="forgotPassword"
-                textStyle={{ color: '#80465D' }}
-                onPress={() => console.log('Forgot password')}
+                variant="secondary"
+                onPress={() => router.push('/ong')}
               >
-                Esqueceu a senha?
+                Entrar
               </DynamicButton>
+              <View style={styles.bottomButtons}>
+                <DynamicButton
+                  variant="forgotPassword"
+                  textStyle={{ color: '#80465D' }}
+                  onPress={() => console.log('Forgot password')}
+                >
+                  Esqueceu a senha?
+                </DynamicButton>
+              </View>
             </View>
           </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
   containerHome: {
     flex: 1,
     backgroundColor: '#ffffff',
@@ -85,14 +92,15 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 16,
-    paddingVertical: 24,
+    paddingTop: 24,
+    paddingBottom: 24,
   },
   container: {
-    marginTop: '30%',
+    marginTop: Platform.OS === 'web' ? 20 : 12,
     width: '100%',
+    maxWidth: 460,
     alignSelf: 'center',
     paddingHorizontal: 24,
-    zIndex: 10,
     backgroundColor: '#fff',
     borderRadius: 16,
     paddingVertical: 20,

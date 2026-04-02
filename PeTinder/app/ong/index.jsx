@@ -62,7 +62,7 @@ export default function Home() {
                 </View>
                 <View style={styles.verMaisContainer}>
                     <DynamicButton
-                        variant="forgotPasswordButton"
+                        variant="forgotPassword"
                         textStyle={styles.verMaisText}
                         onPress={() => router.push('/ong/interessados')}
                     >

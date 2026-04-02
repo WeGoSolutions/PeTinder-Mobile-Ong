@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, scaleHeight, scaleWidth, scaleFont, layout } from '../constants/theme';
 
 export default function Header({ 
@@ -16,10 +17,7 @@ export default function Header({
           onPress={onSettingsPress}
           activeOpacity={0.7}
         >
-          <Image 
-            source={require('../assets/icon-config.svg')} 
-            style={styles.settingsIcon}
-          />
+          <Ionicons name="settings-outline" size={scaleWidth(30)} color={colors.black} />
         </TouchableOpacity>
       )}
     </View>
@@ -46,9 +44,5 @@ const styles = StyleSheet.create({
   },
   settingsButton: {
     padding: scaleWidth(8),
-  },
-  settingsIcon: {
-    width: scaleWidth(30),
-    height: scaleWidth(30),
   },
 });

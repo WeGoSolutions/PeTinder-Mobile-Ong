@@ -1,14 +1,16 @@
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { scaleFont, scaleHeight } from '../constants/theme';
 
 export default function LogoHome() {
     return (
         <View style={styles.container}>
             <View style={styles.row}>
-                <Image source={require('../assets/Logo.svg')} style={styles.logo} />
-                <Text style={styles.titulo}>PeTinder</Text>
+                <Ionicons name="paw" size={scaleFont(52)} color="#80465D" style={styles.logoIcon} />
+                <Text style={styles.titulo} maxFontSizeMultiplier={1.1}>PeTinder</Text>
             </View>
 
-            <Text style={styles.subtitulo}>
+            <Text style={styles.subtitulo} maxFontSizeMultiplier={1.2}>
                 Bem vindo ao PeTinder!
             </Text>
         </View>
@@ -18,26 +20,25 @@ export default function LogoHome() {
 const styles = StyleSheet.create({
     container: {
         alignItems: 'center',
-        marginTop: '30%',
+        width: '100%',
+        marginBottom: scaleHeight(20),
     },
     row: {
         flexDirection: 'row',
         alignItems: 'center',
+        justifyContent: 'center',
         marginBottom: 12,
     },
-    logo: {
-        width: 60,
-        height: 64,
+    logoIcon: {
         marginRight: 10,
-        borderRadius: 8,
     },
     titulo: {
-        fontSize: 40,
+        fontSize: scaleFont(36),
         fontWeight: '700',
         color: '#000000',
     },
     subtitulo: {
-        fontSize: 22,
+        fontSize: scaleFont(18),
         color: '#000000',
         textAlign: 'center',
         fontWeight: '700',

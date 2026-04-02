@@ -1,6 +1,7 @@
 import { Tabs, usePathname, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useOngInfo } from '../../services/petService';
 
 const DEFAULT_ONG_NAME = 'ONG';
@@ -9,6 +10,7 @@ const DEFAULT_ONG_IMAGE_URI = null;
 function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE_URI }) {
     const router = useRouter();
     const pathname = usePathname();
+    const insets = useSafeAreaInsets();
     const { ong } = useOngInfo();
     const displayName =
         typeof ong?.name === 'string' && ong.name.trim().length > 0
@@ -16,7 +18,7 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
             : ongName;
 
     return (
-        <View style={styles.headerWrapper}>
+        <View style={[styles.headerWrapper, { paddingTop: Math.max(insets.top, 8) + 8 }]}>
             <View style={styles.headerContainer}>
                 <View style={styles.avatarContainer}>
                     {ongImageUri ? (
@@ -48,6 +50,7 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
 
 function SecondaryHeader({ title, backTo }) {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
 
     const handleBack = () => {
         if (typeof backTo === 'string' && backTo.trim().length > 0) {
@@ -59,7 +62,7 @@ function SecondaryHeader({ title, backTo }) {
     };
 
     return (
-        <View style={styles.headerWrapper}>
+        <View style={[styles.headerWrapper, { paddingTop: Math.max(insets.top, 8) + 8 }]}>
             <Pressable
                 style={styles.backButton}
                 onPress={handleBack}
@@ -77,6 +80,8 @@ function SecondaryHeader({ title, backTo }) {
 }
 
 export default function OngTabsLayout() {
+    const insets = useSafeAreaInsets();
+
     return (
         <Tabs
             screenOptions={({ route }) => ({
@@ -102,8 +107,8 @@ export default function OngTabsLayout() {
                 tabBarInactiveTintColor: '#000000',
                 tabBarStyle: {
                     display: route.name === 'configuracoes' || route.name === 'chat' ? 'none' : 'flex',
-                    height: 80,
-                    paddingBottom: 8,
+                    height: 72 + insets.bottom,
+                    paddingBottom: Math.max(8, insets.bottom),
                     paddingTop: 8,
                     borderTopWidth: 1,
                     borderTopColor: '#ffc0d97c',
@@ -117,12 +122,7 @@ export default function OngTabsLayout() {
                     } else if (route.name === 'interessados') {
                         iconName = focused ? 'people' : 'people-outline';
                     } else if (route.name === 'dashboards') {
-                        return (
-                            <Image
-                                source={require('../../assets/icon-chart.svg')}
-                                style={[styles.tabChartIcon, !focused && styles.tabChartIconInactive]}
-                            />
-                        );
+                        iconName = focused ? 'stats-chart' : 'stats-chart-outline';
                     } else {
                         iconName = focused ? 'paw' : 'paw-outline';
                     }
@@ -177,7 +177,6 @@ const styles = StyleSheet.create({
     headerWrapper: {
         backgroundColor: '#ffc0d97c',
         paddingHorizontal: 20,
-        paddingTop: 20,
         paddingBottom: 16,
         borderBottomWidth: 1,
         borderBottomColor: '#ffc0d97c',
@@ -227,12 +226,5 @@ const styles = StyleSheet.create({
     avatarImage: {
         width: '100%',
         height: '100%',
-    },
-    tabChartIcon: {
-        width: 30,
-        height: 30,
-    },
-    tabChartIconInactive: {
-        opacity: 0.7,
     },
 });

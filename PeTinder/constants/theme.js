@@ -3,12 +3,12 @@ import { Dimensions, PixelRatio } from 'react-native';
 const BASE_WIDTH = 402;
 const BASE_HEIGHT = 874;
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const getWindowDimensions = () => Dimensions.get('window');
 
-export const scaleWidth = (size) => (SCREEN_WIDTH / BASE_WIDTH) * size;
-export const scaleHeight = (size) => (SCREEN_HEIGHT / BASE_HEIGHT) * size;
+export const scaleWidth = (size) => (getWindowDimensions().width / BASE_WIDTH) * size;
+export const scaleHeight = (size) => (getWindowDimensions().height / BASE_HEIGHT) * size;
 export const scaleFont = (size) => {
-  const scale = SCREEN_WIDTH / BASE_WIDTH;
+  const scale = getWindowDimensions().width / BASE_WIDTH;
   const newSize = size * scale;
   return Math.round(PixelRatio.roundToNearestPixel(newSize));
 };
