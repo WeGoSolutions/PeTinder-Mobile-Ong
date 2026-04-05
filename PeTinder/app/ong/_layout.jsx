@@ -1,10 +1,11 @@
 import { Tabs, usePathname, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useState } from 'react';
 import { useOngInfo } from '../../services/petService';
 import { getSession } from '../../services/sessionService';
+import { colors } from '../../constants/theme';
 
 const DEFAULT_ONG_NAME = 'ONG';
 const DEFAULT_ONG_IMAGE_URI = null;
@@ -42,7 +43,7 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
                     {ongImageUri ? (
                         <Image source={{ uri: ongImageUri }} style={styles.avatarImage} />
                     ) : (
-                        <Ionicons name="business-outline" size={20} color="#80465D" />
+                        <Ionicons name="business-outline" size={20} color={colors.mauve} />
                     )}
                 </View>
                 <Text style={styles.headerName}>Olá, {displayName}!</Text>
@@ -60,7 +61,7 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
                 accessibilityRole="button"
                 accessibilityLabel="Ir para configuracoes"
             >
-                <Ionicons name="settings-outline" size={30} color="#000000" />
+                <Ionicons name="settings-outline" size={30} color={colors.black} />
             </Pressable>
         </View>
     );
@@ -87,7 +88,7 @@ function SecondaryHeader({ title, backTo }) {
                 accessibilityRole="button"
                 accessibilityLabel="Voltar"
             >
-                <Ionicons name="chevron-back" size={28} color="#000000" />
+                <Ionicons name="chevron-back" size={28} color={colors.black} />
             </Pressable>
 
             <Text style={styles.headerName}>{title}</Text>
@@ -121,16 +122,19 @@ export default function OngTabsLayout() {
                     }
                     return <OngHeader />;
                 },
-                tabBarActiveTintColor: '#000000',
-                tabBarInactiveTintColor: '#000000',
+                tabBarActiveTintColor: colors.black,
+                tabBarInactiveTintColor: colors.black,
                 tabBarStyle: {
                     display: route.name === 'configuracoes' || route.name === 'chat' ? 'none' : 'flex',
                     height: 72 + insets.bottom,
                     paddingBottom: Math.max(8, insets.bottom),
                     paddingTop: 8,
-                    borderTopWidth: 1,
-                    borderTopColor: '#ffc0d97c',
-                    backgroundColor: '#ffc0d97c',
+                    borderTopWidth: 0,
+                    borderTopColor: colors.lightPink,
+                    backgroundColor: colors.lightPink,
+                    elevation: 0,
+                    shadowOpacity: 0,
+                    ...(Platform.OS === 'android' ? { shadowColor: 'transparent' } : null),
                 },
                 tabBarIcon: ({ color, focused }) => {
                     let iconName;
@@ -193,11 +197,11 @@ export default function OngTabsLayout() {
 
 const styles = StyleSheet.create({
     headerWrapper: {
-        backgroundColor: '#ffc0d97c',
+        backgroundColor: colors.lightPink,
         paddingHorizontal: 20,
         paddingBottom: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ffc0d97c',
+        borderBottomWidth: 0,
+        borderBottomColor: colors.lightPink,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -210,7 +214,7 @@ const styles = StyleSheet.create({
     },
     headerName: {
         fontSize: 22,
-        color: '#1A1A1A',
+        color: colors.textStrong,
         fontWeight: '600',
         marginTop: 2,
     },
@@ -218,9 +222,9 @@ const styles = StyleSheet.create({
         width: 42,
         height: 42,
         borderRadius: 21,
-        backgroundColor: '#F9EEF3',
+        backgroundColor: colors.roseSurface,
         borderWidth: 1,
-        borderColor: '#EAC4D4',
+        borderColor: colors.roseBorderSoft,
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',

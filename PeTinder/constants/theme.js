@@ -22,7 +22,7 @@ export const colors = {
   // Primary colors
   primaryPink: '#E24476',
   lightPink: '#FFC0D9',
-  
+
   // Neutrals
   black: '#1E1E1E',
   scrollGray: '#D9D9D9',
@@ -32,6 +32,13 @@ export const colors = {
   mauve: '#80465D',
   lightMauve: '#B86184',
   buttonPink: '#E8A0BF',
+
+  // UI surface and border tokens
+  textStrong: '#1A1A1A',
+  textDefault: '#222222',
+  roseBorder: '#E8C8D5',
+  roseSurface: '#F9EEF3',
+  roseBorderSoft: '#EAC4D4',
 };
 
 // Typography
@@ -48,7 +55,7 @@ export const typography = {
       regular: 'Inter_400Regular',
     },
   },
-  
+
   // Font sizes (base values - use scaleFont for responsiveness)
   fontSize: {
     title: 20,

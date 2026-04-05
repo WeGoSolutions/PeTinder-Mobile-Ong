@@ -1,6 +1,7 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { colors } from '../../constants/theme';
 
 const FALLBACK_AVATAR = 'https://i.pravatar.cc/100?img=12';
 
@@ -15,8 +16,8 @@ export default function OngInteressadoItem({ name, petName, avatarUri, userId, p
                     style={styles.avatar}
                 />
                 <View style={styles.textContainer}>
-                    <Text style={styles.name}>{name}</Text>
-                    <Text style={styles.petInfo}>Interessado em: {petName}</Text>
+                    <Text style={styles.name} numberOfLines={1}>{name}</Text>
+                    <Text style={styles.petInfo} numberOfLines={1}>Interessado em: {petName}</Text>
                 </View>
             </View>
             <View style={styles.redirecionarContainer}>
@@ -35,7 +36,7 @@ export default function OngInteressadoItem({ name, petName, avatarUri, userId, p
                     accessibilityRole="button"
                     accessibilityLabel="Ir para chat"
                 >
-                    <Ionicons name="chevron-forward" size={28} color="#000000" />
+                    <Ionicons name="chevron-forward" size={28} color={colors.black} />
                 </Pressable>
             </View>
         </View>
@@ -47,12 +48,14 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#E8C8D5',
+        borderColor: colors.roseBorder,
         borderRadius: 12,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.white,
         padding: 10,
+        paddingRight: 56,
         gap: 10,
-        justifyContent: 'space-between',
+        justifyContent: 'flex-start',
+        position: 'relative',
     },
     avatar: {
         width: 44,
@@ -60,27 +63,35 @@ const styles = StyleSheet.create({
         borderRadius: 22,
     },
     textContainer: {
-        flex: 1
+        flex: 1,
+        minWidth: 0,
     },
     name: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#1A1A1A',
+        color: colors.textStrong,
     },
     petInfo: {
         fontSize: 13,
-        color: '#222222',
+        color: colors.textDefault,
         marginTop: 2,
     },
     headerContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        gap: 10
+        gap: 10,
+        flex: 1,
+        minWidth: 0,
     },
     redirecionarContainer: {
+        position: 'absolute',
+        right: 10,
+        top: 0,
+        bottom: 0,
         justifyContent: 'center',
         alignItems: 'center',
+        width: 42,
     },
     forwardButton: {
         width: 42,
