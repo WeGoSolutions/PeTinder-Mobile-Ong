@@ -120,7 +120,7 @@ export default function Home() {
               </DynamicButton>
               <View style={styles.bottomButtons}>
                 <DynamicButton
-                  variant="forgotPassword"
+                  variant="tertiary"
                   textStyle={{ color: '#80465D' }}
                   onPress={() => console.log('Forgot password')}
                 >

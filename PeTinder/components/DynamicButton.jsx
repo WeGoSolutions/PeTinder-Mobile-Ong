@@ -11,16 +11,18 @@ const DynamicButton = ({
     style,
     textStyle,
 }) => {
+    const resolvedVariant = variant === 'terceary' ? 'tertiary' : variant;
+
     const buttonStyles = [
         styles.button,
-        styles[`${variant}Button`],
+        styles[`${resolvedVariant}Button`],
         disabled && styles.disabledButton,
         style,
     ];
 
     const textStyles = [
         styles.buttonText,
-        styles[`${variant}ButtonText`],
+        styles[`${resolvedVariant}ButtonText`],
         textStyle,
     ];
 
@@ -37,7 +39,7 @@ const DynamicButton = ({
     );
 
     // Secondary button vazado com borda em gradiente
-    if (variant === 'secondary') {
+    if (resolvedVariant === 'secondary') {
         return (
             <TouchableOpacity
                 style={[styles.secondaryTouchable, disabled && styles.disabledButton, style]}
@@ -98,15 +100,12 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
     },
-    forgotPasswordButton: {
+    tertiaryButton: {
         backgroundColor: 'transparent',
         marginTop: 8,
-        paddingVertical: 12,
-    },
-    needHelpButton: {
-        backgroundColor: 'transparent',
-        marginTop: 8,
-        paddingVertical: 12,
+        paddingVertical: 0,
+        paddingHorizontal: 0,
+        alignSelf: 'center',
     },
     disabledButton: {
         opacity: 0.6,
@@ -122,13 +121,11 @@ const styles = StyleSheet.create({
     secondaryButtonText: {
         color: '#1A1A1A',
     },
-    forgotPasswordButtonText: {
+    tertiaryButtonText: {
         fontSize: 18,
         color: '#1A1A1A',
-    },
-    needHelpButtonText: {
-        fontSize: 18,
-        color: '#1A1A1A',
+        textDecorationLine: 'underline',
+        textDecorationStyle: 'solid',
     },
 });
 
