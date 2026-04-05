@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { scaleFont, scaleHeight } from '../constants/theme';
 
@@ -6,7 +6,12 @@ export default function LogoHome() {
     return (
         <View style={styles.container}>
             <View style={styles.row}>
-                <Ionicons name="paw" size={scaleFont(52)} color="#80465D" style={styles.logoIcon} />
+                {/* <Ionicons name="paw" size={scaleFont(52)} color="#80465D" style={styles.logoIcon} /> */}
+                <Image
+                    source={require('../assets/icon-petinder.svg')}
+                    style={styles.logoIcon}
+                    resizeMode="contain"
+                />
                 <Text style={styles.titulo} maxFontSizeMultiplier={1.1}>PeTinder</Text>
             </View>
 

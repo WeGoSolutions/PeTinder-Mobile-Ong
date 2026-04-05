@@ -5,9 +5,10 @@ import {
     ScrollView
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import OngDashboardChart from '../../components/ong/OngDashboardChart';
+import LikesBarChart from '../../components/charts/LikesBarChart';
 import OngInteressadoItem from '../../components/ong/OngInteressadoItem';
 import DynamicButton from '../../components/DynamicButton';
+import { usePets } from '../../services/petService';
 
 const interessadosMock = [
     {
@@ -39,6 +40,7 @@ const interessadosMock = [
 export default function Home() {
     const router = useRouter();
     const interessadosList = interessadosMock.slice(0, 3);
+    const { pets, adoptedCount, notAdoptedCount, loading: petsLoading, error: petsError } = usePets();
 
     return (
         <ScrollView
@@ -73,10 +75,9 @@ export default function Home() {
 
             <View style={styles.section}>
                 <Text style={styles.title}>Pets mais curtidos</Text>
-                <OngDashboardChart
-                    title=""
-                    labels={['Thor', 'Luna', 'Mel', 'Tiana', 'Rex', 'Koda', 'Kenny']}
-                    values={[9, 12, 10, 14, 16, 15, 18]}
+                <LikesBarChart
+                    pets={pets}
+                    maxVisibleBars={6}
                 />
             </View>
         </ScrollView>
@@ -95,7 +96,7 @@ const styles = StyleSheet.create({
     section: {
         minHeight: 260,
         borderRadius: 16,
-        padding: 16,
+        padding: 10,
         backgroundColor: '#FFF9FC',
         borderWidth: 2,
         borderColor: '#E8C8D5',

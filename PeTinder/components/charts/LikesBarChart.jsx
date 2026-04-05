@@ -8,9 +8,9 @@ import { colors, typography, scaleWidth, scaleHeight, scaleFont, layout } from '
  * @param {Array} pets - Array of pet objects with { id, name, likes }
  * @param {number} maxVisibleBars - Maximum bars visible at once (default: 6)
  */
-export default function LikesBarChart({ 
-  pets = [], 
-  maxVisibleBars = 6 
+export default function LikesBarChart({
+  pets = [],
+  maxVisibleBars = 6
 }) {
   const [selectedPetId, setSelectedPetId] = useState(null);
   const [viewportWidth, setViewportWidth] = useState(0);
@@ -23,7 +23,7 @@ export default function LikesBarChart({
 
   // Calculate max likes for proportional bar heights
   const maxLikes = Math.max(...sortedPets.map(p => p.likes), 1);
-  
+
   // Bar dimensions
   const barWidth = scaleWidth(layout.barChart.barWidth);
   const maxBarHeight = scaleHeight(150);
@@ -63,7 +63,7 @@ export default function LikesBarChart({
   const renderBar = (pet) => {
     const isSelected = selectedPetId === pet.id;
     const barHeight = (pet.likes / maxLikes) * maxBarHeight;
-    
+
     return (
       <TouchableOpacity
         key={pet.id}
@@ -77,9 +77,9 @@ export default function LikesBarChart({
             <Text style={styles.likesText}>{pet.likes}</Text>
           )}
         </View>
-        
+
         {/* Bar */}
-        <View 
+        <View
           style={[
             styles.bar,
             {
@@ -89,9 +89,9 @@ export default function LikesBarChart({
             }
           ]}
         />
-        
+
         {/* Pet name */}
-        <Text 
+        <Text
           style={[
             styles.petName,
             isSelected && styles.petNameSelected
@@ -107,7 +107,7 @@ export default function LikesBarChart({
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Pets mais curtidos</Text>
-      
+
       <View style={styles.chartContainer}>
         <ScrollView
           horizontal
@@ -127,7 +127,7 @@ export default function LikesBarChart({
         >
           {sortedPets.map((pet) => renderBar(pet))}
         </ScrollView>
-        
+
         {/* Scroll indicator */}
         {canScroll && (
           <View
@@ -224,6 +224,6 @@ const styles = StyleSheet.create({
   scrollIndicatorThumb: {
     height: scaleHeight(6),
     borderRadius: scaleHeight(3),
-    backgroundColor: '#BDBDBD',
+    backgroundColor: colors.mauve,
   },
 });

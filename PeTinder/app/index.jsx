@@ -3,7 +3,8 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
+  Alert
 } from 'react-native';
 import { useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,12 +12,65 @@ import LogoHome from '../components/LogoHome';
 import DynamicInput from '../components/DynamicInput';
 import DynamicButton from '../components/DynamicButton';
 import { useRouter } from 'expo-router'
+import { login } from '../services/loginService';
+import { saveSession } from '../services/sessionService';
 
 export default function Home() {
   const router = useRouter()
 
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const showInvalidDataAlert = () => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.alert) {
+      window.alert('Dados inválidos');
+      return;
+    }
+
+    Alert.alert('Erro de login', 'Dados inválidos');
+  };
+
+  const handleLogin = async () => {
+    if (isLoading) {
+      return;
+    }
+
+    if (!email || !senha) {
+      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.alert) {
+        window.alert('Campos obrigatórios', 'Preencha email e senha.');
+        return;
+      }
+
+      Alert.alert('Campos obrigatórios', 'Preencha email e senha.');
+      return;
+    }
+
+    //PARA TESTE SEM BACKEND
+    const useBackend = String(process.env.EXPO_PUBLIC_UTILIZAR_BACKEND ?? '').toLowerCase() === 'true';
+    if (!useBackend) {
+      await saveSession(null, email);
+      router.push('/ong');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const response = await login(email, senha);
+      const token = response?.token ?? response?.jwt ?? null; //arrumar isso, adicionar o jwt correto
+      const nome = response?.nome;
+
+      if (nome) {
+        await saveSession(token, nome);
+      }
+
+      router.push('/ong');
+    } catch (error) {
+      showInvalidDataAlert();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
 
@@ -58,7 +112,9 @@ export default function Home() {
             <View style={styles.buttonContainer}>
               <DynamicButton
                 variant="secondary"
-                onPress={() => router.push('/ong')}
+                onPress={handleLogin}
+                isLoading={isLoading}
+                disabled={isLoading}
               >
                 Entrar
               </DynamicButton>

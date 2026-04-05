@@ -1,8 +1,10 @@
-import { Tabs, usePathname, useRouter } from 'expo-router';
+import { Tabs, usePathname, useRouter, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCallback, useEffect, useState } from 'react';
 import { useOngInfo } from '../../services/petService';
+import { getSession } from '../../services/sessionService';
 
 const DEFAULT_ONG_NAME = 'ONG';
 const DEFAULT_ONG_IMAGE_URI = null;
@@ -11,11 +13,27 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
     const router = useRouter();
     const pathname = usePathname();
     const insets = useSafeAreaInsets();
-    const { ong } = useOngInfo();
-    const displayName =
-        typeof ong?.name === 'string' && ong.name.trim().length > 0
-            ? ong.name
-            : ongName;
+    const [sessionName, setSessionName] = useState(null);
+
+    const loadSessionName = useCallback(async () => {
+        try {
+            const { name } = await getSession();
+            console.log('Nome recuperado da sessão:', name);
+            if (name) {
+                setSessionName(name);
+            }
+        } catch (error) {
+            console.error('Erro ao carregar sessão:', error);
+        }
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadSessionName();
+        }, [loadSessionName])
+    );
+
+    const displayName = sessionName || ongName;
 
     return (
         <View style={[styles.headerWrapper, { paddingTop: Math.max(insets.top, 8) + 8 }]}>
