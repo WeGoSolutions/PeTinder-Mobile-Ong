@@ -78,6 +78,7 @@ export default function Home() {
                 <LikesBarChart
                     pets={pets}
                     maxVisibleBars={6}
+                    homeChart={true}
                 />
             </View>
         </ScrollView>

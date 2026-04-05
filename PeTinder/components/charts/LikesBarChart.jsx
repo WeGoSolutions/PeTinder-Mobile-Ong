@@ -7,10 +7,12 @@ import { colors, typography, scaleWidth, scaleHeight, scaleFont, layout } from '
  * 
  * @param {Array} pets - Array of pet objects with { id, name, likes }
  * @param {number} maxVisibleBars - Maximum bars visible at once (default: 6)
+ * @param {boolean} homeChart - Maximum bars visible at once (default: 6)
  */
 export default function LikesBarChart({
   pets = [],
-  maxVisibleBars = 6
+  maxVisibleBars = 6,
+  homeChart = false
 }) {
   const [selectedPetId, setSelectedPetId] = useState(null);
   const [viewportWidth, setViewportWidth] = useState(0);
@@ -106,7 +108,9 @@ export default function LikesBarChart({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Pets mais curtidos</Text>
+      {!homeChart && (
+        <Text style={styles.title}>Pets mais curtidos</Text>
+      )}
 
       <View style={styles.chartContainer}>
         <ScrollView
