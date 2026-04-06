@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
         marginBottom: 16,
     },
     secondaryButton: {
-        padding: 2,
+        padding: 4,
         borderRadius: 12,
         marginBottom: 16,
     },
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
         borderRadius: 12,
     },
     secondaryInner: {
-        borderRadius: 10,
+        borderRadius: 8,
         backgroundColor: '#FFFFFF',
         paddingVertical: 14,
         paddingHorizontal: 24,

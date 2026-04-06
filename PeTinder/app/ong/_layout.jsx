@@ -19,7 +19,6 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
     const loadSessionName = useCallback(async () => {
         try {
             const { name } = await getSession();
-            console.log('Nome recuperado da sessão:', name);
             if (name) {
                 setSessionName(name);
             }
@@ -120,12 +119,22 @@ export default function OngTabsLayout() {
                                 : 'Chat';
                         return <SecondaryHeader title={chatUserName} />;
                     }
+                    if (route.name === 'petForm') {
+                        const petFormMode =
+                            typeof route.params?.mode === 'string' ? route.params.mode.trim().toLowerCase() : '';
+                        const petFormTitle = petFormMode === 'edit' ? 'Edição de Pet' : 'Adição de Pet';
+                        const petFormBackTo =
+                            typeof route.params?.from === 'string' && route.params.from.trim().length > 0
+                                ? route.params.from
+                                : '/ong/pets';
+                        return <SecondaryHeader title={petFormTitle} backTo={petFormBackTo} />;
+                    }
                     return <OngHeader />;
                 },
                 tabBarActiveTintColor: colors.black,
                 tabBarInactiveTintColor: colors.black,
                 tabBarStyle: {
-                    display: route.name === 'configuracoes' || route.name === 'chat' ? 'none' : 'flex',
+                    display: route.name === 'configuracoes' || route.name === 'chat' || route.name === 'petForm' ? 'none' : 'flex',
                     height: 72 + insets.bottom,
                     paddingBottom: Math.max(8, insets.bottom),
                     paddingTop: 8,
@@ -186,6 +195,13 @@ export default function OngTabsLayout() {
             />
             <Tabs.Screen
                 name="chat"
+                options={{
+                    href: null,
+                    title: '',
+                }}
+            />
+            <Tabs.Screen
+                name="petForm"
                 options={{
                     href: null,
                     title: '',

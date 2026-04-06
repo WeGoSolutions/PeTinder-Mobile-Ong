@@ -4,16 +4,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LogoHome from '../components/LogoHome';
 import DynamicInput from '../components/DynamicInput';
 import DynamicButton from '../components/DynamicButton';
 import { useRouter } from 'expo-router'
 import { login } from '../services/loginService';
-import { saveSession } from '../services/sessionService';
+import { getSession, saveSession } from '../services/sessionService';
 
 export default function Home() {
   const router = useRouter()
@@ -21,6 +22,35 @@ export default function Home() {
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isBootstrapping, setIsBootstrapping] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const bootstrapSession = async () => {
+      try {
+        const { token, name, ongId } = await getSession();
+        const hasPersistedSession = Boolean((typeof token === 'string' && token.trim()) || (typeof name === 'string' && name.trim()) || (typeof ongId === 'string' && ongId.trim()));
+
+        if (isMounted && hasPersistedSession) {
+          router.replace('/ong');
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao inicializar sessão:', error);
+      } finally {
+        if (isMounted) {
+          setIsBootstrapping(false);
+        }
+      }
+    };
+
+    bootstrapSession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
 
   const showInvalidDataAlert = () => {
     if (Platform.OS === 'web' && typeof window !== 'undefined' && window.alert) {
@@ -32,7 +62,7 @@ export default function Home() {
   };
 
   const handleLogin = async () => {
-    if (isLoading) {
+    if (isLoading || isBootstrapping) {
       return;
     }
 
@@ -49,22 +79,22 @@ export default function Home() {
     //PARA TESTE SEM BACKEND
     const useBackend = String(process.env.EXPO_PUBLIC_UTILIZAR_BACKEND ?? '').toLowerCase() === 'true';
     if (!useBackend) {
-      await saveSession(null, email);
-      router.push('/ong');
+      await saveSession(null, email, '1');
+      router.replace('/ong');
       return;
     }
 
     try {
       setIsLoading(true);
       const response = await login(email, senha);
-      const token = response?.token ?? response?.jwt ?? null; //arrumar isso, adicionar o jwt correto
-      const nome = response?.nome;
+      const payload = response?.data ?? response;
+      const token = payload?.token ?? payload?.jwt ?? payload?.accessToken ?? null;
+      const ongId = payload?.id ?? payload?.ongId ?? payload?.ong?.id ?? null;
+      const nome = payload?.nome ?? payload?.name ?? payload?.ong?.nome ?? payload?.ong?.name ?? email;
 
-      if (nome) {
-        await saveSession(token, nome);
-      }
+      await saveSession(token, nome, ongId);
 
-      router.push('/ong');
+      router.replace('/ong');
     } catch (error) {
       showInvalidDataAlert();
     } finally {
@@ -72,6 +102,16 @@ export default function Home() {
     }
   };
 
+
+  if (isBootstrapping) {
+    return (
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+        <View style={styles.bootstrapContainer}>
+          <ActivityIndicator size="large" color="#80465D" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
 
   return (
@@ -115,6 +155,7 @@ export default function Home() {
                 onPress={handleLogin}
                 isLoading={isLoading}
                 disabled={isLoading}
+                textStyle={{ color: '#80465D' }}
               >
                 Entrar
               </DynamicButton>
@@ -169,6 +210,11 @@ const styles = StyleSheet.create({
   },
   bottomButtons: {
     flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  bootstrapContainer: {
+    flex: 1,
+    alignItems: 'center',
     justifyContent: 'center',
   }
 });

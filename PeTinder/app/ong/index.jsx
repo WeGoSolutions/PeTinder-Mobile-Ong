@@ -15,7 +15,7 @@ const interessadosMock = [
         id: 'interessado-1',
         userId: 'u-1',
         petId: 'p-2',
-        name: 'Carla Mendes',
+        name: 'Catleya Ishii',
         petName: 'Luna',
         avatarUri: 'https://i.pravatar.cc/100?img=24',
     },
