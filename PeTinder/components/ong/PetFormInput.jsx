@@ -10,6 +10,7 @@ export default function PetFormInput({
     multiline = false,
     numberOfLines = 1,
     maxLength,
+    error,
 }) {
     return (
         <View style={styles.container}>
@@ -23,9 +24,10 @@ export default function PetFormInput({
                 multiline={multiline}
                 numberOfLines={numberOfLines}
                 maxLength={maxLength}
-                style={[styles.input, multiline && styles.textArea]}
+                style={[styles.input, multiline && styles.textArea, error && styles.inputError]}
                 textAlignVertical={multiline ? 'top' : 'center'}
             />
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
         </View>
     );
 }
@@ -53,5 +55,13 @@ const styles = StyleSheet.create({
     },
     textArea: {
         minHeight: 96,
+    },
+    inputError: {
+        borderColor: '#D14343',
+    },
+    errorText: {
+        fontSize: 12,
+        color: '#D14343',
+        marginTop: 2,
     },
 });

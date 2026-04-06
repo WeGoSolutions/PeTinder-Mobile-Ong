@@ -9,6 +9,16 @@ export const listarPetsDaOng = async (ongId, page = 0, size = 10) => {
     });
 };
 
+export const criarPet = async (payload) => {
+    return api.post('/pets', payload);
+};
+
+export const atualizarPet = async (petId, payload) => {
+    return api.put(`/pets/${petId}`, payload);
+};
+
 export default {
     listarPetsDaOng,
+    criarPet,
+    atualizarPet,
 };

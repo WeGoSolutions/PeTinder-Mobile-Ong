@@ -7,6 +7,15 @@ export default function PetCard({
     id,
     name,
     imageUrl,
+    imageUrls = [],
+    idade,
+    porte,
+    tags = [],
+    descricao,
+    isCastrado = false,
+    isVermifugo = false,
+    isVacinado = false,
+    sexo,
     isAdopted = false,
 }) {
     const router = useRouter();
@@ -18,6 +27,16 @@ export default function PetCard({
                 mode: 'edit',
                 petId: String(id),
                 from: '/ong/pets',
+                nome: name || '',
+                idade: idade !== undefined && idade !== null ? String(idade) : '',
+                porte: porte || '',
+                tags: tags.join('|'),
+                descricao: descricao || '',
+                isCastrado: String(Boolean(isCastrado)),
+                isVermifugo: String(Boolean(isVermifugo)),
+                isVacinado: String(Boolean(isVacinado)),
+                sexo: sexo || '',
+                imageUrls: imageUrls.join('|'),
             },
         });
     };

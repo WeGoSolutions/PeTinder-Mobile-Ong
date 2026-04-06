@@ -1,26 +1,52 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../../constants/theme';
 import PetFormInput from '../../components/ong/PetFormInput';
 import DynamicButton from '../../components/DynamicButton';
 import { getSession } from '../../services/sessionService';
+import { atualizarPet, criarPet } from '../../services/petApiService';
+
+const MAX_IMAGES = 5;
+const MAX_TAGS = 7;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const ALL_TAGS = [
+    ['Ativo', 'Calmo', 'Brincalhão', 'Carinhoso'],
+    ['Curioso', 'Independente', 'Protetor', 'Sociável'],
+    ['Medroso', 'Territorial', 'Obediente', 'Teimoso'],
+];
+
+const formatAssetName = (asset, index) => {
+    if (asset?.fileName && asset.fileName.trim().length > 0) {
+        return asset.fileName;
+    }
+
+    const extension = asset?.mimeType?.split('/')[1] || 'jpg';
+    return `pet-image-${Date.now()}-${index + 1}.${extension}`;
+};
 
 export default function PetForm() {
-    const { mode } = useLocalSearchParams();
+    const { mode, petId, nome: paramNome, idade: paramIdade, porte: paramPorte, tags: paramTags, descricao: paramDescricao, isCastrado: paramIsCastrado, isVermifugo: paramIsVermifugo, isVacinado: paramIsVacinado, sexo: paramSexo, imageUrls: paramImageUrls } = useLocalSearchParams();
+    const router = useRouter();
     const normalizedMode = typeof mode === 'string' ? mode.trim().toLowerCase() : '';
     const isEdit = normalizedMode === 'edit';
+    const resolvedPetId = typeof petId === 'string' ? petId.trim() : '';
 
     const [nome, setNome] = useState('');
-    const [idade, setIdade] = useState('');
+    const [idadeInput, setIdadeInput] = useState('');
+    const [idadeUnidade, setIdadeUnidade] = useState('anos');
     const [porte, setPorte] = useState('');
-    const [tagsInput, setTagsInput] = useState('');
+    const [selectedTags, setSelectedTags] = useState([]);
     const [descricao, setDescricao] = useState('');
     const [isCastrado, setIsCastrado] = useState(false);
     const [isVermifugo, setIsVermifugo] = useState(false);
     const [isVacinado, setIsVacinado] = useState(false);
     const [sexo, setSexo] = useState('');
     const [ongId, setOngId] = useState('');
+    const [images, setImages] = useState([]);
+    const [errors, setErrors] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         const loadOngId = async () => {
@@ -31,30 +57,261 @@ export default function PetForm() {
         loadOngId();
     }, []);
 
+    useEffect(() => {
+        if (!isEdit) {
+            return;
+        }
+
+        if (typeof paramNome === 'string') {
+            setNome(paramNome);
+        }
+
+        if (typeof paramPorte === 'string') {
+            setPorte(paramPorte);
+        }
+
+        if (typeof paramDescricao === 'string') {
+            setDescricao(paramDescricao);
+        }
+
+        if (typeof paramSexo === 'string') {
+            setSexo(paramSexo.toUpperCase());
+        }
+
+        if (typeof paramIsCastrado === 'string') {
+            setIsCastrado(paramIsCastrado === 'true');
+        }
+
+        if (typeof paramIsVermifugo === 'string') {
+            setIsVermifugo(paramIsVermifugo === 'true');
+        }
+
+        if (typeof paramIsVacinado === 'string') {
+            setIsVacinado(paramIsVacinado === 'true');
+        }
+
+        if (typeof paramTags === 'string') {
+            setSelectedTags(paramTags.split('|').map((tag) => tag.trim()).filter(Boolean));
+        }
+
+        if (typeof paramIdade === 'string') {
+            const parsedAge = Number.parseFloat(paramIdade.replace(',', '.'));
+            if (Number.isFinite(parsedAge) && parsedAge > 0) {
+                if (parsedAge < 1) {
+                    setIdadeUnidade('meses');
+                    setIdadeInput(String(Math.round(parsedAge * 12)));
+                } else {
+                    setIdadeUnidade('anos');
+                    setIdadeInput(String(parsedAge));
+                }
+            }
+        }
+
+        if (typeof paramImageUrls === 'string' && paramImageUrls.trim().length > 0) {
+            const urls = paramImageUrls.split('|').map((url) => url.trim()).filter(Boolean);
+            setImages(urls.slice(0, MAX_IMAGES).map((uri, index) => ({
+                uri,
+                base64: '',
+                fileName: `imagem-${index + 1}.jpg`,
+            })));
+        }
+    }, [
+        isEdit,
+        paramNome,
+        paramPorte,
+        paramDescricao,
+        paramSexo,
+        paramIsCastrado,
+        paramIsVermifugo,
+        paramIsVacinado,
+        paramTags,
+        paramIdade,
+        paramImageUrls,
+    ]);
+
     const payload = useMemo(() => {
-        const idadeNumerica = Number.parseFloat(String(idade).replace(',', '.'));
-        const tags = tagsInput
-            .split(',')
-            .map((item) => item.trim())
-            .filter(Boolean);
+        const idadeNumerica = Number.parseFloat(String(idadeInput).replace(',', '.'));
+        const idadeEmAnos = Number.isFinite(idadeNumerica)
+            ? (idadeUnidade === 'meses' ? idadeNumerica / 12 : idadeNumerica)
+            : null;
+        const newImages = images.filter((item) => typeof item?.base64 === 'string' && item.base64.trim().length > 0);
 
         return {
-            nome: nome.trim(),
-            idade: Number.isFinite(idadeNumerica) ? idadeNumerica : null,
+            nome: nome,
+            idade: idadeEmAnos,
             porte: porte || null,
-            tags,
-            descricao: descricao.trim(),
+            tags: selectedTags,
+            descricao: descricao,
             isCastrado,
             isVermifugo,
             isVacinado,
             sexo: sexo || null,
             ongId: ongId || null,
+            imagensBase64: newImages.map((item) => item.base64),
+            nomesArquivos: newImages.map((item) => item.fileName),
         };
-    }, [nome, idade, porte, tagsInput, descricao, isCastrado, isVermifugo, isVacinado, sexo, ongId]);
+    }, [
+        nome,
+        idadeInput,
+        idadeUnidade,
+        porte,
+        selectedTags,
+        descricao,
+        isCastrado,
+        isVermifugo,
+        isVacinado,
+        sexo,
+        ongId,
+        images,
+    ]);
 
-    const handleSave = () => {
-        // TODO: integrar com service de criar/editar pet
-        console.log('Payload Pet:', payload);
+    const validateForm = () => {
+        const validationErrors = {};
+        const tags = payload.tags;
+
+        if (!payload.nome) {
+            validationErrors.nome = 'Nome é obrigatório';
+        } else if (payload.nome.length < 2 || payload.nome.length > 50) {
+            validationErrors.nome = 'Nome deve ter entre 2 e 50 caracteres';
+        }
+
+        if (payload.idade === null) {
+            validationErrors.idade = 'Idade é obrigatória';
+        } else if (payload.idade <= 0) {
+            validationErrors.idade = 'Idade deve ser maior que zero';
+        }
+
+        if (!payload.porte || !['Pequeno', 'Médio', 'Grande'].includes(payload.porte)) {
+            validationErrors.porte = 'Porte deve ser Pequeno, Médio ou Grande';
+        }
+
+        if (!tags.length) {
+            validationErrors.tags = 'Pet deve ter pelo menos uma tag';
+        } else if (tags.length > MAX_TAGS) {
+            validationErrors.tags = 'Máximo de 7 tags permitidas';
+        }
+
+        if (!payload.descricao) {
+            validationErrors.descricao = 'Descrição é obrigatória';
+        } else if (payload.descricao.length > 500) {
+            validationErrors.descricao = 'Descrição deve ter no máximo 500 caracteres';
+        }
+
+        if (!payload.sexo || !['MACHO', 'FEMEA'].includes(payload.sexo)) {
+            validationErrors.sexo = 'Sexo deve ser MACHO ou FEMEA';
+        }
+
+        if (!payload.ongId || !UUID_REGEX.test(payload.ongId)) {
+            validationErrors.ongId = 'ONG é obrigatória';
+        }
+
+        if (images.length > MAX_IMAGES) {
+            validationErrors.images = 'Máximo de 5 imagens permitidas';
+        }
+
+        setErrors(validationErrors);
+        return Object.keys(validationErrors).length === 0;
+    };
+
+    const handleAddImages = async () => {
+        const remaining = MAX_IMAGES - images.length;
+        if (remaining <= 0) {
+            Alert.alert('Limite atingido', 'Você pode adicionar no máximo 5 imagens.');
+            return;
+        }
+
+        const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+            Alert.alert('Permissão necessária', 'Permita acesso à galeria para selecionar imagens.');
+            return;
+        }
+
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsMultipleSelection: true,
+            selectionLimit: remaining,
+            quality: 0.7,
+            base64: true,
+        });
+
+        if (result.canceled || !result.assets?.length) {
+            return;
+        }
+
+        const formatted = result.assets
+            .filter((asset) => Boolean(asset.base64))
+            .map((asset, index) => ({
+                uri: asset.uri,
+                base64: asset.base64,
+                fileName: formatAssetName(asset, index),
+            }));
+
+        setImages((prev) => [...prev, ...formatted].slice(0, MAX_IMAGES));
+    };
+
+    const handleRemoveImage = (indexToRemove) => {
+        setImages((prev) => prev.filter((_, index) => index !== indexToRemove));
+    };
+
+    const handleTagToggle = (tagName) => {
+        setSelectedTags((prev) => {
+            if (prev.includes(tagName)) {
+                return prev.filter((tag) => tag !== tagName);
+            }
+
+            if (prev.length >= MAX_TAGS) {
+                Alert.alert('Limite de tags', 'Você pode selecionar no máximo 7 tags.');
+                return prev;
+            }
+
+            return [...prev, tagName];
+        });
+    };
+
+    const handleSave = async () => {
+        if (!validateForm()) {
+            Alert.alert('Campos inválidos', 'Revise os campos obrigatórios do formulário.');
+            return;
+        }
+
+        // Validação rápida do caminho antes de enviar ao backend.
+        if (isEdit && !resolvedPetId) {
+            Alert.alert('Rota inválida', 'Modo edição sem ID do pet. Abra a edição novamente.');
+            return;
+        }
+
+        try {
+            setIsSubmitting(true);
+
+            if (isEdit) {
+                await atualizarPet(resolvedPetId, payload);
+            } else {
+                await criarPet(payload);
+            }
+
+            Alert.alert(
+                'Sucesso',
+                isEdit ? 'Pet atualizado com sucesso.' : 'Pet cadastrado com sucesso.',
+                [
+                    {
+                        text: 'OK',
+                        onPress: () => router.replace('/ong/pets'),
+                    },
+                ]
+            );
+        } catch (error) {
+            const apiMessage =
+                error?.response?.data?.message ||
+                error?.response?.data?.error ||
+                null;
+
+            Alert.alert(
+                'Erro ao salvar pet',
+                apiMessage || 'Não foi possível salvar o pet. Tente novamente.'
+            );
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -65,21 +322,41 @@ export default function PetForm() {
                     value={nome}
                     onChangeText={setNome}
                     placeholder="Ex: Luna"
+                    error={errors.nome}
                 />
 
-                {/* arrumar aqui */}
-                <PetFormInput
-                    label="Idade"
-                    value={idade}
-                    onChangeText={setIdade}
-                    placeholder="Ex: 2.5"
-                    keyboardType="decimal-pad"
-                />
+                <View style={styles.ageRow}>
+                    <View style={styles.ageValue}>
+                        <PetFormInput
+                            label="Idade"
+                            value={idadeInput}
+                            onChangeText={setIdadeInput}
+                            placeholder="Ex: 2"
+                            keyboardType="decimal-pad"
+                            error={errors.idade}
+                        />
+                    </View>
+
+                    <View style={styles.ageUnit}>
+                        <Text style={styles.groupLabel}>Unidade</Text>
+                        <View style={styles.optionRow}>
+                            {['anos', 'meses'].map((item) => (
+                                <Pressable
+                                    key={item}
+                                    style={[styles.optionChip, idadeUnidade === item && styles.optionChipActive]}
+                                    onPress={() => setIdadeUnidade(item)}
+                                >
+                                    <Text style={[styles.optionText, idadeUnidade === item && styles.optionTextActive]}>{item}</Text>
+                                </Pressable>
+                            ))}
+                        </View>
+                    </View>
+                </View>
 
                 <View style={styles.group}>
                     <Text style={styles.groupLabel}>Porte</Text>
                     <View style={styles.optionRow}>
-                        {['pequeno', 'medio', 'grande'].map((item) => (
+                        {['Pequeno', 'Médio', 'Grande'].map((item) => (
                             <Pressable
                                 key={item}
                                 style={[styles.optionChip, porte === item && styles.optionChipActive]}
@@ -89,14 +366,29 @@ export default function PetForm() {
                             </Pressable>
                         ))}
                     </View>
+                    {errors.porte ? <Text style={styles.errorText}>{errors.porte}</Text> : null}
                 </View>
 
-                <PetFormInput
-                    label="Tags"
-                    value={tagsInput}
-                    onChangeText={setTagsInput}
-                    placeholder="Ex: dócil, brincalhão, sociável"
-                />
+                <View style={styles.group}>
+                    <Text style={styles.groupLabel}>Tags ({selectedTags.length}/{MAX_TAGS})</Text>
+                    {ALL_TAGS.map((row, rowIndex) => (
+                        <View key={`tag-row-${rowIndex}`} style={styles.optionRow}>
+                            {row.map((tag) => {
+                                const isSelected = selectedTags.includes(tag);
+                                return (
+                                    <Pressable
+                                        key={tag}
+                                        style={[styles.optionChip, isSelected && styles.optionChipActive]}
+                                        onPress={() => handleTagToggle(tag)}
+                                    >
+                                        <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>{tag}</Text>
+                                    </Pressable>
+                                );
+                            })}
+                        </View>
+                    ))}
+                    {errors.tags ? <Text style={styles.errorText}>{errors.tags}</Text> : null}
+                </View>
 
                 <PetFormInput
                     label="Descrição"
@@ -105,12 +397,14 @@ export default function PetForm() {
                     placeholder="Conte sobre o pet"
                     multiline
                     numberOfLines={4}
+                    maxLength={500}
+                    error={errors.descricao}
                 />
 
                 <View style={styles.group}>
                     <Text style={styles.groupLabel}>Sexo</Text>
                     <View style={styles.optionRow}>
-                        {['femea', 'macho'].map((item) => (
+                        {['FEMEA', 'MACHO'].map((item) => (
                             <Pressable
                                 key={item}
                                 style={[styles.optionChip, sexo === item && styles.optionChipActive]}
@@ -120,6 +414,7 @@ export default function PetForm() {
                             </Pressable>
                         ))}
                     </View>
+                    {errors.sexo ? <Text style={styles.errorText}>{errors.sexo}</Text> : null}
                 </View>
 
                 <View style={styles.group}>
@@ -148,7 +443,32 @@ export default function PetForm() {
                     </View>
                 </View>
 
-                <DynamicButton variant="primary" onPress={handleSave}>
+                <View style={styles.group}>
+                    <Text style={styles.groupLabel}>Imagens do pet ({images.length}/{MAX_IMAGES})</Text>
+                    <Pressable style={styles.addImageButton} onPress={handleAddImages}>
+                        <Text style={styles.addImageButtonText}>Adicionar imagens</Text>
+                    </Pressable>
+
+                    {errors.images ? <Text style={styles.errorText}>{errors.images}</Text> : null}
+
+                    <View style={styles.imagesGrid}>
+                        {images.map((item, index) => (
+                            <View key={`${item.uri}-${index}`} style={styles.imageItem}>
+                                <Image source={{ uri: item.uri }} style={styles.imagePreview} />
+                                <Pressable
+                                    style={styles.removeImageButton}
+                                    onPress={() => handleRemoveImage(index)}
+                                >
+                                    <Text style={styles.removeImageText}>X</Text>
+                                </Pressable>
+                            </View>
+                        ))}
+                    </View>
+                </View>
+
+                {errors.ongId ? <Text style={styles.errorText}>{errors.ongId}</Text> : null}
+
+                <DynamicButton variant="primary" onPress={handleSave} isLoading={isSubmitting} disabled={isSubmitting}>
                     {isEdit ? 'Salvar alterações' : 'Cadastrar pet'}
                 </DynamicButton>
             </View>
@@ -214,5 +534,68 @@ const styles = StyleSheet.create({
     },
     optionTextActive: {
         color: colors.white,
+    },
+    ageRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 10,
+    },
+    ageValue: {
+        flex: 1,
+    },
+    ageUnit: {
+        flex: 1,
+        gap: 8,
+    },
+    addImageButton: {
+        borderWidth: 1,
+        borderColor: colors.mauve,
+        borderRadius: 10,
+        paddingVertical: 10,
+        alignItems: 'center',
+        backgroundColor: colors.white,
+    },
+    addImageButtonText: {
+        color: colors.mauve,
+        fontWeight: '600',
+        fontSize: 14,
+    },
+    imagesGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    imageItem: {
+        width: 90,
+        height: 90,
+        borderRadius: 10,
+        overflow: 'hidden',
+        position: 'relative',
+        borderWidth: 1,
+        borderColor: colors.roseBorder,
+    },
+    imagePreview: {
+        width: '100%',
+        height: '100%',
+    },
+    removeImageButton: {
+        position: 'absolute',
+        top: 4,
+        right: 4,
+        width: 22,
+        height: 22,
+        borderRadius: 11,
+        backgroundColor: 'rgba(0,0,0,0.65)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    removeImageText: {
+        color: colors.white,
+        fontSize: 11,
+        fontWeight: '700',
+    },
+    errorText: {
+        fontSize: 12,
+        color: '#D14343',
     },
 });

@@ -30,7 +30,7 @@ export default function Pets() {
 
                 const content = result.data.content || [];
 
-                const firstImageUrl = content[0]?.imagensUrls?.[0];
+                const firstImageUrl = content[0]?.imageUrl?.[0];
                 if (firstImageUrl) {
                     try {
                         const resp = await fetch(firstImageUrl);
@@ -60,9 +60,7 @@ export default function Pets() {
             return pets;
         }
 
-        return pets.filter((pet) =>
-            String(pet?.name ?? '').toLowerCase().includes(term)
-        );
+        return pets.filter((pet) => String(pet?.petNome ?? '').toLowerCase().includes(term));
     }, [search, pets]);
 
     return (
@@ -77,11 +75,20 @@ export default function Pets() {
                 {filteredPets.length > 0 ? (
                     filteredPets.map((pet) => (
                         <PetCard
-                            key={pet.id}
-                            id={pet.id}
-                            name={pet.name}
-                            imageUrl={pet?.imagensUrls?.[0]}
-                            isAdopted={Boolean(pet?.adopted)}
+                            key={pet.petId}
+                            id={pet.petId}
+                            name={pet.petNome}
+                            imageUrl={pet?.imageUrl?.[0]}
+                            imageUrls={pet?.imageUrl || []}
+                            idade={pet?.idade}
+                            porte={pet?.porte}
+                            tags={pet?.tags || []}
+                            descricao={pet?.descricao}
+                            isCastrado={Boolean(pet?.isCastrado)}
+                            isVermifugo={Boolean(pet?.isVermifugo)}
+                            isVacinado={Boolean(pet?.isVacinado)}
+                            sexo={pet?.sexo}
+                            isAdopted={Array.isArray(pet?.status) && pet.status.includes('ADOPTED')}
                         />
                     ))
                 ) : (
