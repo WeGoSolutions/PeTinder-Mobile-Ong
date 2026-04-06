@@ -17,6 +17,7 @@ export default function PetCard({
     isVacinado = false,
     sexo,
     isAdopted = false,
+    onPress,
 }) {
     const router = useRouter();
 
@@ -44,7 +45,7 @@ export default function PetCard({
     return (
         <Pressable
             style={[styles.card, isAdopted && styles.cardAdopted]}
-            onPress={handleEdit}
+            onPress={onPress || handleEdit}
             accessibilityRole="button"
             accessibilityLabel={`Editar pet ${name || 'sem nome'}`}
         >
@@ -73,18 +74,20 @@ export default function PetCard({
 
 const styles = StyleSheet.create({
     card: {
-        borderWidth: 1,
-        borderColor: colors.roseBorder,
+        borderWidth: 6,
+        borderColor: colors.mauve,
         borderRadius: 12,
         overflow: 'hidden',
-        backgroundColor: colors.white,
+        backgroundColor: colors.mauve,
     },
     cardAdopted: {
-        opacity: 0.75,
+        borderColor: colors.lightMauve,
+        backgroundColor: colors.lightMauve,
     },
     imageContainer: {
-        height: 140,
+        height: 165,
         backgroundColor: colors.roseSurface,
+        borderRadius: 12,
     },
     image: {
         width: '100%',
@@ -101,15 +104,15 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        paddingHorizontal: 12,
-        paddingVertical: 10,
+        paddingHorizontal: 6,
+        paddingVertical: 6,
         gap: 10,
     },
     name: {
         flex: 1,
-        fontSize: 15,
-        fontWeight: '700',
-        color: colors.textStrong,
+        fontSize: 20,
+        fontWeight: '600',
+        color: colors.white,
     },
     actions: {
         flexDirection: 'row',

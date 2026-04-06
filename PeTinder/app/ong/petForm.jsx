@@ -1,9 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../../constants/theme';
 import PetFormInput from '../../components/ong/PetFormInput';
+import Tag from '../../components/ong/Tag';
+import Toast from '../../components/Toast';
 import DynamicButton from '../../components/DynamicButton';
 import { getSession } from '../../services/sessionService';
 import { atualizarPet, criarPet } from '../../services/petApiService';
@@ -12,9 +14,10 @@ const MAX_IMAGES = 5;
 const MAX_TAGS = 7;
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const ALL_TAGS = [
-    ['Ativo', 'Calmo', 'Brincalhão', 'Carinhoso'],
-    ['Curioso', 'Independente', 'Protetor', 'Sociável'],
-    ['Medroso', 'Territorial', 'Obediente', 'Teimoso'],
+    ['Ativo', 'Calmo', 'Brincalhão'],
+    ['Carinhoso', 'Curioso', 'Independente'],
+    ['Protetor', 'Sociável', 'Medroso'],
+    ['Territorial', 'Obediente', 'Teimoso'],
 ];
 
 const formatAssetName = (asset, index) => {
@@ -47,6 +50,44 @@ export default function PetForm() {
     const [images, setImages] = useState([]);
     const [errors, setErrors] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [toast, setToast] = useState({ visible: false, title: '', message: '', type: 'info' });
+
+    const showToast = useCallback((title, message, type = 'info', duration = 2400) => {
+        setToast({ visible: true, title, message, type });
+
+        setTimeout(() => {
+            setToast((prev) => ({ ...prev, visible: false }));
+        }, duration);
+    }, []);
+
+    const resetForm = useCallback(() => {
+        setNome('');
+        setIdadeInput('');
+        setIdadeUnidade('anos');
+        setPorte('');
+        setSelectedTags([]);
+        setDescricao('');
+        setIsCastrado(false);
+        setIsVermifugo(false);
+        setIsVacinado(false);
+        setSexo('');
+        setImages([]);
+        setErrors({});
+        setIsSubmitting(false);
+    }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            return () => {
+                resetForm();
+            };
+        }, [resetForm])
+    );
+
+    const navigateToPets = useCallback(() => {
+        resetForm();
+        router.replace('/ong/pets');
+    }, [resetForm, router]);
 
     useEffect(() => {
         const loadOngId = async () => {
@@ -216,13 +257,13 @@ export default function PetForm() {
     const handleAddImages = async () => {
         const remaining = MAX_IMAGES - images.length;
         if (remaining <= 0) {
-            Alert.alert('Limite atingido', 'Você pode adicionar no máximo 5 imagens.');
+            showToast('Limite atingido', 'Você pode adicionar no máximo 5 imagens.', 'warning');
             return;
         }
 
         const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
         if (!permission.granted) {
-            Alert.alert('Permissão necessária', 'Permita acesso à galeria para selecionar imagens.');
+            showToast('Permissão necessária', 'Permita acesso à galeria para selecionar imagens.', 'warning');
             return;
         }
 
@@ -260,7 +301,7 @@ export default function PetForm() {
             }
 
             if (prev.length >= MAX_TAGS) {
-                Alert.alert('Limite de tags', 'Você pode selecionar no máximo 7 tags.');
+                showToast('Limite de tags', 'Você pode selecionar no máximo 7 tags.', 'warning');
                 return prev;
             }
 
@@ -270,13 +311,13 @@ export default function PetForm() {
 
     const handleSave = async () => {
         if (!validateForm()) {
-            Alert.alert('Campos inválidos', 'Revise os campos obrigatórios do formulário.');
+            showToast('Campos inválidos', 'Revise os campos obrigatórios do formulário.', 'error');
             return;
         }
 
         // Validação rápida do caminho antes de enviar ao backend.
         if (isEdit && !resolvedPetId) {
-            Alert.alert('Rota inválida', 'Modo edição sem ID do pet. Abra a edição novamente.');
+            showToast('Rota inválida', 'Modo edição sem ID do pet. Abra a edição novamente.', 'error');
             return;
         }
 
@@ -289,25 +330,26 @@ export default function PetForm() {
                 await criarPet(payload);
             }
 
-            Alert.alert(
+            showToast(
                 'Sucesso',
                 isEdit ? 'Pet atualizado com sucesso.' : 'Pet cadastrado com sucesso.',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => router.replace('/ong/pets'),
-                    },
-                ]
+                'success',
+                1200
             );
+            setTimeout(() => {
+                navigateToPets();
+            }, 1200);
         } catch (error) {
             const apiMessage =
                 error?.response?.data?.message ||
                 error?.response?.data?.error ||
                 null;
 
-            Alert.alert(
+            showToast(
                 'Erro ao salvar pet',
-                apiMessage || 'Não foi possível salvar o pet. Tente novamente.'
+                apiMessage || 'Não foi possível salvar o pet. Tente novamente.',
+                'error',
+                3200
             );
         } finally {
             setIsSubmitting(false);
@@ -372,17 +414,16 @@ export default function PetForm() {
                 <View style={styles.group}>
                     <Text style={styles.groupLabel}>Tags ({selectedTags.length}/{MAX_TAGS})</Text>
                     {ALL_TAGS.map((row, rowIndex) => (
-                        <View key={`tag-row-${rowIndex}`} style={styles.optionRow}>
+                        <View key={`tag-row-${rowIndex}`} style={styles.tagRow}>
                             {row.map((tag) => {
                                 const isSelected = selectedTags.includes(tag);
                                 return (
-                                    <Pressable
+                                    <Tag
                                         key={tag}
-                                        style={[styles.optionChip, isSelected && styles.optionChipActive]}
+                                        tagName={tag}
+                                        isDisabled={!isSelected}
                                         onPress={() => handleTagToggle(tag)}
-                                    >
-                                        <Text style={[styles.optionText, isSelected && styles.optionTextActive]}>{tag}</Text>
-                                    </Pressable>
+                                    />
                                 );
                             })}
                         </View>
@@ -404,13 +445,16 @@ export default function PetForm() {
                 <View style={styles.group}>
                     <Text style={styles.groupLabel}>Sexo</Text>
                     <View style={styles.optionRow}>
-                        {['FEMEA', 'MACHO'].map((item) => (
+                        {[
+                            { label: 'Fêmea', value: 'FEMEA' },
+                            { label: 'Macho', value: 'MACHO' },
+                        ].map((item) => (
                             <Pressable
-                                key={item}
-                                style={[styles.optionChip, sexo === item && styles.optionChipActive]}
-                                onPress={() => setSexo(item)}
+                                key={item.value}
+                                style={[styles.optionChip, sexo === item.value && styles.optionChipActive]}
+                                onPress={() => setSexo(item.value)}
                             >
-                                <Text style={[styles.optionText, sexo === item && styles.optionTextActive]}>{item}</Text>
+                                <Text style={[styles.optionText, sexo === item.value && styles.optionTextActive]}>{item.label}</Text>
                             </Pressable>
                         ))}
                     </View>
@@ -472,6 +516,13 @@ export default function PetForm() {
                     {isEdit ? 'Salvar alterações' : 'Cadastrar pet'}
                 </DynamicButton>
             </View>
+
+            <Toast
+                visible={toast.visible}
+                title={toast.title}
+                message={toast.message}
+                type={toast.type}
+            />
         </ScrollView>
     );
 }
@@ -514,8 +565,14 @@ const styles = StyleSheet.create({
         flexWrap: 'wrap',
         gap: 8,
     },
+    tagRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
+    },
     optionChip: {
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.roseBorder,
         borderRadius: 999,
         paddingHorizontal: 12,

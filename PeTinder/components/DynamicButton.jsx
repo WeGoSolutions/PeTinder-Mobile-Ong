@@ -11,18 +11,30 @@ const DynamicButton = ({
     style,
     textStyle,
 }) => {
-    const resolvedVariant = variant === 'terceary' ? 'tertiary' : variant;
+    const variantButtonStyle = variant === 'modal-primary'
+        ? styles.modalPrimaryButton
+        : variant === 'tertiary'
+            ? styles.tertiaryButton
+            : styles[`${variant}Button`] || styles.primaryButton;
+
+    const variantTextStyle = variant === 'modal-primary'
+        ? styles.modalPrimaryButtonText
+        : variant === 'modal-secondary'
+            ? styles.modalSecondaryButtonText
+            : variant === 'tertiary'
+                ? styles.tertiaryButtonText
+                : styles[`${variant}ButtonText`] || styles.primaryButtonText;
 
     const buttonStyles = [
         styles.button,
-        styles[`${resolvedVariant}Button`],
+        variantButtonStyle,
         disabled && styles.disabledButton,
         style,
     ];
 
     const textStyles = [
         styles.buttonText,
-        styles[`${resolvedVariant}ButtonText`],
+        variantTextStyle,
         textStyle,
     ];
 
@@ -39,10 +51,14 @@ const DynamicButton = ({
     );
 
     // Secondary button vazado com borda em gradiente
-    if (resolvedVariant === 'secondary') {
+    if (variant === 'secondary' || variant === 'modal-secondary') {
         return (
             <TouchableOpacity
-                style={[styles.secondaryTouchable, disabled && styles.disabledButton, style]}
+                style={[
+                    variant === 'modal-secondary' ? styles.modalSecondaryTouchable : styles.secondaryTouchable,
+                    disabled && styles.disabledButton,
+                    style,
+                ]}
                 onPress={onPress}
                 disabled={disabled || isLoading}
                 activeOpacity={0.7}
@@ -51,9 +67,9 @@ const DynamicButton = ({
                     colors={['#80465D', '#B86184']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={styles.secondaryButton}
+                    style={variant === 'modal-secondary' ? styles.modalSecondaryButton : styles.secondaryButton}
                 >
-                    <View style={styles.secondaryInner}>
+                    <View style={variant === 'modal-secondary' ? styles.modalSecondaryInner : styles.secondaryInner}>
                         {renderButtonContent()}
                     </View>
                 </LinearGradient>
@@ -82,6 +98,9 @@ const styles = StyleSheet.create({
     },
     primaryButton: {
         backgroundColor: '#E8A0BF',
+        borderWidth: 4,
+        borderColor: '#FE5497',
+        paddingVertical: 14,
         marginBottom: 16,
     },
     secondaryButton: {
@@ -107,6 +126,30 @@ const styles = StyleSheet.create({
         paddingHorizontal: 0,
         alignSelf: 'center',
     },
+    modalPrimaryButton: {
+        backgroundColor: '#E8A0BF',
+        borderWidth: 4,
+        borderColor: '#FE5497',
+        marginBottom: 0,
+        paddingVertical: 10,
+        paddingHorizontal: 14,
+    },
+    modalSecondaryButton: {
+        padding: 4,
+        borderRadius: 12,
+        marginBottom: 0,
+    },
+    modalSecondaryTouchable: {
+        borderRadius: 12,
+    },
+    modalSecondaryInner: {
+        borderRadius: 8,
+        backgroundColor: '#FFFFFF',
+        paddingVertical: 10,
+        paddingHorizontal: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     disabledButton: {
         opacity: 0.6,
     },
@@ -120,6 +163,16 @@ const styles = StyleSheet.create({
     },
     secondaryButtonText: {
         color: '#1A1A1A',
+    },
+    modalPrimaryButtonText: {
+        color: '#1A1A1A',
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    modalSecondaryButtonText: {
+        color: '#1A1A1A',
+        fontSize: 14,
+        fontWeight: '700',
     },
     tertiaryButtonText: {
         fontSize: 18,
