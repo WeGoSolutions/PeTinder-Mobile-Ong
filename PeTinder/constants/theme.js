@@ -22,6 +22,7 @@ export const colors = {
   // Primary colors
   primaryPink: '#E24476',
   lightPink: '#FFC0D9',
+  mauve: '#80465D',
 
   // Neutrals
   black: '#1E1E1E',
@@ -29,7 +30,7 @@ export const colors = {
   white: '#FFFFFF',
 
   // Legacy colors from existing app (for consistency)
-  mauve: '#80465D',
+  strongPink: '#E36E9C',
   lightMauve: '#B86184',
   buttonPink: '#E8A0BF',
 

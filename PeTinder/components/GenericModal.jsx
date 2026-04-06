@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/theme';
 
-export default function GenericModal({ visible, title, onClose, children }) {
+export default function GenericModal({ visible, title, onClose, children, titleStyle }) {
     return (
         <Modal
             visible={visible}
@@ -15,7 +15,9 @@ export default function GenericModal({ visible, title, onClose, children }) {
 
                 <View style={styles.modalCard}>
                     <View style={styles.header}>
-                        <Text style={styles.title}>{title}</Text>
+                        {typeof title === 'string' && title.trim().length > 0 ? (
+                            <Text style={[styles.title, titleStyle]}>{title}</Text>
+                        ) : null}
                         <Pressable
                             style={styles.closeButton}
                             onPress={onClose}

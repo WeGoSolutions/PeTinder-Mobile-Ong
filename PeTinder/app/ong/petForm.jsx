@@ -86,7 +86,10 @@ export default function PetForm() {
 
     const navigateToPets = useCallback(() => {
         resetForm();
-        router.replace('/ong/pets');
+        router.replace({
+            pathname: '/ong/pets',
+            params: { refresh: String(Date.now()) },
+        });
     }, [resetForm, router]);
 
     useEffect(() => {

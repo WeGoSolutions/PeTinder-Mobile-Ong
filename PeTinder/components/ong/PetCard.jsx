@@ -81,8 +81,8 @@ const styles = StyleSheet.create({
         backgroundColor: colors.mauve,
     },
     cardAdopted: {
-        borderColor: colors.lightMauve,
-        backgroundColor: colors.lightMauve,
+        borderColor: colors.strongPink,
+        backgroundColor: colors.strongPink,
     },
     imageContainer: {
         height: 165,

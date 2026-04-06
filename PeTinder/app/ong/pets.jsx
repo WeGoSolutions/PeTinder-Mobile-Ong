@@ -1,25 +1,24 @@
-import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image } from 'react-native';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, View, Text, StyleSheet, ScrollView } from 'react-native';
 import { colors } from '../../constants/theme';
 import PetSearchInput from '../../components/ong/PetSearchInput';
 import PetCard from '../../components/ong/PetCard';
-import GenericModal from '../../components/GenericModal';
+import PetModalFlow from '../../components/modals/PetModalFlow';
 import { listarPetsDaOng } from '../../services/petApiService';
 import { getSession } from '../../services/sessionService';
-import { useRouter } from 'expo-router';
-import DynamicButton from '../../components/DynamicButton';
-import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 
 
 export default function Pets() {
-    const router = useRouter();
+    const { refresh } = useLocalSearchParams();
     const [search, setSearch] = useState('');
     const [pets, setPets] = useState([]);
     const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
+    const [isLoadingPets, setIsLoadingPets] = useState(false);
     const [selectedPet, setSelectedPet] = useState(null);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const modalImageUrl = selectedPet?.imageUrl?.[0] || '';
-    const isSelectedPetAdopted = Array.isArray(selectedPet?.status) && selectedPet.status.includes('ADOPTED');
 
     const openPetModal = (pet) => {
         setSelectedPet(pet);
@@ -31,72 +30,57 @@ export default function Pets() {
         setSelectedPet(null);
     };
 
-    const handleGoToEdit = () => {
-        if (!selectedPet) {
-            return;
+    const fetchPets = useCallback(async () => {
+        setIsLoadingPets(true);
+        try {
+            const { ongId } = await getSession();
+            if (!ongId) {
+                return;
+            }
+
+            const result = await listarPetsDaOng(ongId, currentPage, 10);
+
+            if (!result?.data) {
+                console.error('Erro: resposta invalida ao listar pets', result);
+                return;
+            }
+
+            const content = result.data.content || [];
+
+            const firstImageUrl = content[0]?.imageUrl?.[0];
+            if (firstImageUrl) {
+                try {
+                    const resp = await fetch(firstImageUrl);
+                    if (!resp.ok) {
+                        console.error('Imagem nao acessivel:', firstImageUrl, 'status:', resp.status);
+                    }
+                } catch (err) {
+                    console.error('Erro ao acessar imagem:', firstImageUrl, err);
+                }
+            }
+
+            setPets(content);
+            setTotalPages(Number(result.data.totalPages ?? 0));
+            setTotalElements(Number(result.data.totalElements ?? content.length));
+        } catch (error) {
+            console.error('Erro ao listar pets da ONG:', error);
+        } finally {
+            setIsLoadingPets(false);
         }
-
-        router.push({
-            pathname: '/ong/petForm',
-            params: {
-                mode: 'edit',
-                petId: String(selectedPet.petId),
-                from: '/ong/pets',
-                nome: selectedPet.petNome || '',
-                idade: selectedPet.idade !== undefined && selectedPet.idade !== null ? String(selectedPet.idade) : '',
-                porte: selectedPet.porte || '',
-                tags: (selectedPet.tags || []).join('|'),
-                descricao: selectedPet.descricao || '',
-                isCastrado: String(Boolean(selectedPet.isCastrado)),
-                isVermifugo: String(Boolean(selectedPet.isVermifugo)),
-                isVacinado: String(Boolean(selectedPet.isVacinado)),
-                sexo: selectedPet.sexo || '',
-                imageUrls: (selectedPet.imageUrl || []).join('|'),
-            },
-        });
-
-        closePetModal();
-    };
+    }, [currentPage]);
 
     useEffect(() => {
-        const fetchPets = async () => {
-            try {
-                const { ongId } = await getSession();
-                if (!ongId) {
-                    return;
-                }
-
-                const result = await listarPetsDaOng(ongId, currentPage, 10);
-
-                if (!result?.data) {
-                    console.error('Erro: resposta invalida ao listar pets', result);
-                    return;
-                }
-
-                const content = result.data.content || [];
-
-                const firstImageUrl = content[0]?.imageUrl?.[0];
-                if (firstImageUrl) {
-                    try {
-                        const resp = await fetch(firstImageUrl);
-                        if (!resp.ok) {
-                            console.error('Imagem nao acessivel:', firstImageUrl, 'status:', resp.status);
-                        }
-                    } catch (err) {
-                        console.error('Erro ao acessar imagem:', firstImageUrl, err);
-                    }
-                }
-
-                setPets(content);
-                setTotalPages(result.data.totalPages ?? 0);
-                setTotalElements(result.data.totalElements ?? 0);
-            } catch (error) {
-                console.error('Erro ao listar pets da ONG:', error);
-            }
-        };
-
         fetchPets();
-    }, [currentPage]);
+    }, [fetchPets, refresh]);
+
+    useFocusEffect(
+        useCallback(
+            () => {
+                fetchPets();
+            },
+            [fetchPets]
+        )
+    );
 
     const filteredPets = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -108,6 +92,16 @@ export default function Pets() {
         return pets.filter((pet) => String(pet?.petNome ?? '').toLowerCase().includes(term));
     }, [search, pets]);
 
+    const shouldShowPagination = totalElements > 15 && totalPages > 1;
+
+    const handlePreviousPage = () => {
+        setCurrentPage((prev) => Math.max(0, prev - 1));
+    };
+
+    const handleNextPage = () => {
+        setCurrentPage((prev) => Math.min(totalPages - 1, prev + 1));
+    };
+
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <PetSearchInput
@@ -117,7 +111,12 @@ export default function Pets() {
             />
 
             <View style={styles.list}>
-                {filteredPets.length > 0 ? (
+                {isLoadingPets ? (
+                    <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color={colors.mauve} />
+                        <Text style={styles.loadingText}>Carregando pets...</Text>
+                    </View>
+                ) : filteredPets.length > 0 ? (
                     filteredPets.map((pet) => (
                         <View key={pet.petId} style={styles.cardCell}>
                             <PetCard
@@ -143,55 +142,37 @@ export default function Pets() {
                 )}
             </View>
 
-            <GenericModal
+            {shouldShowPagination ? (
+                <View style={styles.paginationContainer}>
+                    <Pressable
+                        style={[styles.paginationButton, currentPage === 0 && styles.paginationButtonDisabled]}
+                        onPress={handlePreviousPage}
+                        disabled={currentPage === 0 || isLoadingPets}
+                    >
+                        <Text style={styles.paginationButtonText}>Anterior</Text>
+                    </Pressable>
+
+                    <Text style={styles.paginationInfo}>Página {currentPage + 1} de {totalPages}</Text>
+
+                    <Pressable
+                        style={[
+                            styles.paginationButton,
+                            (currentPage >= totalPages - 1 || isLoadingPets) && styles.paginationButtonDisabled,
+                        ]}
+                        onPress={handleNextPage}
+                        disabled={currentPage >= totalPages - 1 || isLoadingPets}
+                    >
+                        <Text style={styles.paginationButtonText}>Próxima</Text>
+                    </Pressable>
+                </View>
+            ) : null}
+
+            <PetModalFlow
                 visible={isModalVisible}
                 onClose={closePetModal}
-                title={selectedPet?.petNome || 'Pet'}
-            >
-                <View style={[styles.imageContainer, isSelectedPetAdopted && styles.isAdopted]}>
-                    {modalImageUrl ? (
-                        <Image
-                            source={{ uri: modalImageUrl }}
-                            style={styles.image}
-                            resizeMode="cover"
-                        />
-                    ) : (
-                        <View style={styles.placeholderContainer}>
-                            <Ionicons name="image-outline" size={32} color={colors.mauve} />
-                        </View>
-                    )}
-                </View>
-
-                <View style={styles.modalActions}>
-                    <DynamicButton
-                        variant="modal-secondary"
-                        onPress={closePetModal}
-                        style={styles.modalActionButton}
-                        textStyle={{ color: '#80465D' }}
-                    >
-                        Deletar Pet
-                    </DynamicButton>
-
-                    <DynamicButton
-                        variant="modal-primary"
-                        onPress={handleGoToEdit}
-                        style={styles.modalActionButton}
-                        textStyle={{ color: '#fff' }}
-                    >
-                        Editar Pet
-                    </DynamicButton>
-                </View>
-                <View style={styles.modalActions}>
-                    <DynamicButton
-                        variant="tertiary"
-                        textStyle={{ color: '#80465D' }}
-                        onPress={() => console.log('Forgot password')}
-                        style={{ marginBottom: 10 }}
-                    >
-                        Mudar Status de Adoção
-                    </DynamicButton>
-                </View>
-            </GenericModal>
+                pet={selectedPet}
+                onRefresh={fetchPets}
+            />
         </ScrollView>
     );
 }
@@ -229,43 +210,44 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 16,
     },
-    modalText: {
-        fontSize: 14,
-        color: colors.textStrong,
-    },
-    modalActions: {
-        flexDirection: 'row',
-        justifyContent: 'center',
-        gap: 10,
-        marginTop: 4,
-    },
-    modalActionButton: {
-        width: '48%',
-    },
-    imageContainer: {
-        alignSelf: 'center',
-        height: 270,
-        width: '95%',
-        borderWidth: 6,
-        borderColor: colors.mauve,
-        backgroundColor: colors.mauve,
-        borderRadius: 12,
-        overflow: 'hidden',
-        alignItems: 'center'
-    },
-    isAdopted: {
-        borderColor: colors.lightMauve,
-        backgroundColor: colors.lightMauve,
-    },
-    image: {
+    loadingContainer: {
         width: '100%',
-        height: '100%',
-    },
-    placeholderContainer: {
-        width: '100%',
-        height: '100%',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: colors.roseSurface,
+        paddingVertical: 24,
+        gap: 8,
+    },
+    loadingText: {
+        fontSize: 14,
+        color: colors.mauve,
+    },
+    paginationContainer: {
+        marginTop: 14,
+        marginBottom: 8,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 8,
+    },
+    paginationButton: {
+        borderWidth: 1,
+        borderColor: colors.roseBorder,
+        borderRadius: 10,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        backgroundColor: colors.white,
+    },
+    paginationButtonDisabled: {
+        opacity: 0.45,
+    },
+    paginationButtonText: {
+        color: colors.textStrong,
+        fontWeight: '600',
+        fontSize: 13,
+    },
+    paginationInfo: {
+        color: colors.mauve,
+        fontSize: 13,
+        fontWeight: '600',
     },
 });
