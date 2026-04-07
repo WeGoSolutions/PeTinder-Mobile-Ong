@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/theme';
@@ -9,10 +9,31 @@ import { listarInteressadosDaOng } from '../../services/interessadosService';
 
 export default function Interessados() {
     const [interessados, setInteressados] = useState([]);
+    const [expandedPets, setExpandedPets] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [ongId, setOngId] = useState('');
     const [loadError, setLoadError] = useState(false);
+
+    const groupedInteressados = interessados.reduce((groups, interessado) => {
+        const petNome = interessado?.petNome?.trim() || 'Sem nome';
+        if (!groups[petNome]) {
+            groups[petNome] = [];
+        }
+        groups[petNome].push(interessado);
+        return groups;
+    }, {});
+
+    const sortedGroups = Object.entries(groupedInteressados)
+        .sort(([petNomeA], [petNomeB]) => petNomeA.localeCompare(petNomeB, 'pt-BR'));
+
+    const togglePetGroup = (petNome) => {
+        setExpandedPets((current) => (
+            current.includes(petNome)
+                ? current.filter((item) => item !== petNome)
+                : [...current, petNome]
+        ));
+    };
 
     const loadInteressados = useCallback(async () => {
         if (!ongId) {
@@ -76,26 +97,52 @@ export default function Interessados() {
                     <Text style={styles.emptyText}>Nenhum interessado encontrado no momento.</Text>
                 </View>
             ) : (
-                <FlatList
-                    data={interessados}
-                    keyExtractor={(item, index) => `${item.userId || 'interessado'}-${index}`}
-                    renderItem={({ item }) => (
-                        <OngInteressadoItem
-                            userName={item.userName}
-                            petNome={item.petNome}
-                            userEmail={item.userEmail}
-                            imageUrl={item.imageUrl}
-                            userId={item.userId}
-                            petId={item.petId}
-                        />
-                    )}
+                <ScrollView
+                    style={styles.list}
                     contentContainerStyle={styles.listContent}
-                    ItemSeparatorComponent={() => <View style={styles.separator} />}
                     showsVerticalScrollIndicator
                     refreshControl={
                         <RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor={colors.mauve} />
                     }
-                />
+                >
+                    {sortedGroups.map(([petNome, petInteressados]) => {
+                        const isExpanded = expandedPets.includes(petNome);
+                        return (
+                            <View key={petNome} style={styles.groupCard}>
+                                <Pressable style={styles.groupHeader} onPress={() => togglePetGroup(petNome)}>
+                                    <View style={styles.groupHeaderText}>
+                                        <Text style={styles.groupTitle} numberOfLines={1}>{petNome}</Text>
+                                        <Text style={styles.groupSubtitle} numberOfLines={1}>
+                                            {petInteressados.length} interessado{petInteressados.length === 1 ? '' : 's'}
+                                        </Text>
+                                    </View>
+
+                                    <Ionicons
+                                        name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                                        size={22}
+                                        color={colors.mauve}
+                                    />
+                                </Pressable>
+
+                                {isExpanded ? (
+                                    <View style={styles.groupItems}>
+                                        {petInteressados.map((item, index) => (
+                                            <OngInteressadoItem
+                                                key={`${item.userId || 'interessado'}-${item.petId || 'pet'}-${index}`}
+                                                userName={item.userName}
+                                                petNome={item.petNome}
+                                                userEmail={item.userEmail}
+                                                imageUrl={item.imageUrl}
+                                                userId={item.userId}
+                                                petId={item.petId}
+                                            />
+                                        ))}
+                                    </View>
+                                ) : null}
+                            </View>
+                        );
+                    })}
+                </ScrollView>
             )}
         </View>
     );
@@ -134,10 +181,43 @@ const styles = StyleSheet.create({
         color: '#6E6E6E',
         textAlign: 'center',
     },
-    listContent: {
-        paddingBottom: 24,
+    list: {
+        flex: 1,
     },
-    separator: {
-        height: 10,
+    listContent: {
+        paddingTop: 10,
+        paddingBottom: 24,
+        gap: 12,
+    },
+    groupCard: {
+        borderWidth: 1,
+        borderColor: colors.roseBorder,
+        borderRadius: 14,
+        backgroundColor: colors.lightPink,
+        padding: 10,
+        gap: 10,
+    },
+    groupHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 10,
+    },
+    groupHeaderText: {
+        flex: 1,
+        minWidth: 0,
+    },
+    groupTitle: {
+        fontSize: 16,
+        fontWeight: '700',
+        color: colors.textStrong,
+    },
+    groupSubtitle: {
+        marginTop: 2,
+        fontSize: 12,
+        color: colors.black,
+    },
+    groupItems: {
+        gap: 10,
     },
 });
