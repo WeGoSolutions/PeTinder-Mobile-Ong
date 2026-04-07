@@ -3,21 +3,31 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { colors } from '../../constants/theme';
 
-const FALLBACK_AVATAR = 'https://i.pravatar.cc/100?img=12';
-
-export default function OngInteressadoItem({ name, petName, avatarUri, userId, petId }) {
+export default function OngInteressadoItem({
+    userName,
+    petNome,
+    userEmail,
+    imageUrl,
+    userId,
+    petId,
+}) {
     const router = useRouter();
+    const displayName = userName || 'Usuario';
 
     return (
         <View style={styles.item}>
             <View style={styles.headerContainer}>
-                <Image
-                    source={{ uri: avatarUri || FALLBACK_AVATAR }}
-                    style={styles.avatar}
-                />
+                {imageUrl ? (
+                    <Image source={{ uri: imageUrl }} style={styles.avatar} />
+                ) : (
+                    <View style={styles.avatarPlaceholder}>
+                        <Ionicons name="person-outline" size={20} color={colors.mauve} />
+                    </View>
+                )}
                 <View style={styles.textContainer}>
-                    <Text style={styles.name} numberOfLines={1}>{name}</Text>
-                    <Text style={styles.petInfo} numberOfLines={1}>Interessado em: {petName}</Text>
+                    <Text style={styles.name} numberOfLines={1}>{displayName}</Text>
+                    <Text style={styles.petInfo} numberOfLines={1}>Interessado em: {petNome || '-'}</Text>
+                    <Text style={styles.emailInfo} numberOfLines={1}>{userEmail || '-'}</Text>
                 </View>
             </View>
             <View style={styles.redirecionarContainer}>
@@ -29,7 +39,7 @@ export default function OngInteressadoItem({ name, petName, avatarUri, userId, p
                             params: {
                                 userId: String(userId ?? ''),
                                 petId: String(petId ?? ''),
-                                userName: String(name ?? ''),
+                                userName: String(displayName),
                             },
                         })
                     }
@@ -62,6 +72,14 @@ const styles = StyleSheet.create({
         height: 44,
         borderRadius: 22,
     },
+    avatarPlaceholder: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: colors.roseSurface,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     textContainer: {
         flex: 1,
         minWidth: 0,
@@ -74,6 +92,11 @@ const styles = StyleSheet.create({
     petInfo: {
         fontSize: 13,
         color: colors.textDefault,
+        marginTop: 2,
+    },
+    emailInfo: {
+        fontSize: 12,
+        color: colors.mauve,
         marginTop: 2,
     },
     headerContainer: {

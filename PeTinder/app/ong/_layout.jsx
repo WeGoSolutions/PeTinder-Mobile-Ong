@@ -38,13 +38,13 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
     return (
         <View style={[styles.headerWrapper, { paddingTop: Math.max(insets.top, 8) + 8 }]}>
             <View style={styles.headerContainer}>
-                <View style={styles.avatarContainer}>
+                {/* <View style={styles.avatarContainer}>
                     {ongImageUri ? (
                         <Image source={{ uri: ongImageUri }} style={styles.avatarImage} />
                     ) : (
                         <Ionicons name="business-outline" size={20} color={colors.mauve} />
                     )}
-                </View>
+                </View> */}
                 <Text style={styles.headerName}>Olá, {displayName}!</Text>
             </View>
             <Pressable
