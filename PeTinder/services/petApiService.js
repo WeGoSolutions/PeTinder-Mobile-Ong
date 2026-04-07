@@ -38,26 +38,17 @@ export const fetchAdotanteInfoPetCard = async (petId) => {
     return api.get(`/status/adopted/${petId}`);
 };
 
-export const getMensagensPendentesPetCard = async (ongId, petName, petId) => {
-    const response = await api.get(`/ongs/${ongId}/mensagens-pendentes`);
+export const fetchAdotantesInteressados = async (petId) => {
+    const response = await api.get(`/status/pending/user/${petId}`);
     const data = Array.isArray(response?.data) ? response.data : [];
 
-    return data.filter((msg) => {
-        const msgPetId = String(msg?.petId ?? '');
-        const msgPetNome = String(msg?.nomePet ?? msg?.petNome ?? '').toLowerCase();
-        const targetPetId = String(petId ?? '');
-        const targetPetNome = String(petName ?? '').toLowerCase();
-
-        if (targetPetId && msgPetId) {
-            return msgPetId === targetPetId;
-        }
-
-        if (targetPetNome && msgPetNome) {
-            return msgPetNome === targetPetNome;
-        }
-
-        return false;
-    });
+    return data.map((item) => ({
+        ...item,
+        userId: item?.userId || item?.idUser || null,
+        userName: item?.userName || item?.nomeUser || 'Usuario',
+        petId: item?.petId || item?.idPet || null,
+        imageUrl: item?.imageUrl || null,
+    }));
 };
 
 export default {
@@ -69,5 +60,5 @@ export default {
     marcarComoAdotadoExterno,
     voltarParaAdocao,
     fetchAdotanteInfoPetCard,
-    getMensagensPendentesPetCard,
+    fetchAdotantesInteressados,
 };

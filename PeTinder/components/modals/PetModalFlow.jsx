@@ -6,7 +6,7 @@ import Toast from '../Toast';
 import {
     deletarPet,
     fetchAdotanteInfoPetCard,
-    getMensagensPendentesPetCard,
+    fetchAdotantesInteressados,
     marcarPetComoAdotado,
     marcarComoAdotadoExterno,
     voltarParaAdocao,
@@ -140,8 +140,8 @@ export default function PetModalFlow({ visible, pet, onClose, onRefresh }) {
                 return;
             }
 
-            const data = await getMensagensPendentesPetCard(ongId, pet.petNome, pet.petId);
-            setInteressados(Array.isArray(data) ? data : []);
+            const data = await fetchAdotantesInteressados(pet.petId);
+            setInteressados(data);
             setIsStatusModalVisible(false);
             setIsInteressadosModalVisible(true);
         } catch (error) {

@@ -1,7 +1,8 @@
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/theme';
 import GenericModal from '../GenericModal';
+import OngInteressadoSelectItem from '../ong/OngInteressadoSelectItem';
 
 export default function InterestedUsersModal({
     visible,
@@ -11,15 +12,19 @@ export default function InterestedUsersModal({
     isLoading,
     onSelectUser,
 }) {
+    const users = Array.isArray(interestedUsers) ? interestedUsers : [];
+
     return (
         <GenericModal
             visible={visible}
             onClose={onClose}
             title={`Usuários interessados no(a) ${petName || ''}:`}
+            modalCardStyle={styles.modalCard}
+            contentStyle={styles.modalContent}
         >
             {isLoading ? (
                 <Text style={styles.emptyText}>Carregando interessados...</Text>
-            ) : interestedUsers.length === 0 ? (
+            ) : users.length === 0 ? (
                 <View style={styles.emptyStateContainer}>
                     <Ionicons name="search-outline" size={34} color={colors.mauve} />
                     <Text style={styles.emptyText}>
@@ -27,32 +32,21 @@ export default function InterestedUsersModal({
                     </Text>
                 </View>
             ) : (
-                <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
-                    {interestedUsers.map((user, index) => (
-                        <Pressable
+                <ScrollView
+                    style={styles.list}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator
+                    persistentScrollbar
+                    indicatorStyle="black"
+                >
+                    {users.map((user, index) => (
+                        <OngInteressadoSelectItem
                             key={`${user.userId || 'interessado'}-${index}`}
-                            style={styles.item}
+                            name={user.userName || 'Usuario'}
+                            avatarUri={user.imageUrl}
+                            accessibilityLabel="Selecionar interessado"
                             onPress={() => onSelectUser(user.userId)}
-                        >
-                            {user.imageUrl ? (
-                                <Image source={{ uri: user.imageUrl }} style={styles.avatar} />
-                            ) : (
-                                <View style={styles.avatarPlaceholder}>
-                                    <Ionicons name="person-outline" size={20} color={colors.mauve} />
-                                </View>
-                            )}
-
-                            <View style={styles.textContent}>
-                                <Text style={styles.userName} numberOfLines={1}>
-                                    {user.userName || 'Usuário'}
-                                </Text>
-                                <Text style={styles.caption} numberOfLines={1}>
-                                    Toque para marcar como adotado
-                                </Text>
-                            </View>
-
-                            <Ionicons name="checkmark-circle-outline" size={22} color={colors.mauve} />
-                        </Pressable>
+                        />
                     ))}
                 </ScrollView>
             )}
@@ -61,48 +55,22 @@ export default function InterestedUsersModal({
 }
 
 const styles = StyleSheet.create({
+    modalCard: {
+        minHeight: '45%',
+        maxHeight: '45%',
+    },
+    modalContent: {
+        flex: 1,
+        minHeight: 0,
+    },
     list: {
-        maxHeight: 320,
+        flex: 1,
+        minHeight: 0,
+        marginTop: 8
     },
     listContent: {
         gap: 10,
-    },
-    item: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: colors.roseBorder,
-        borderRadius: 12,
-        backgroundColor: colors.white,
-        padding: 10,
-        gap: 10,
-    },
-    avatar: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-    },
-    avatarPlaceholder: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
-        backgroundColor: colors.roseSurface,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    textContent: {
-        flex: 1,
-        minWidth: 0,
-    },
-    userName: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: colors.textStrong,
-    },
-    caption: {
-        fontSize: 12,
-        color: colors.mauve,
-        marginTop: 2,
+        paddingBottom: 20,
     },
     emptyText: {
         fontSize: 14,

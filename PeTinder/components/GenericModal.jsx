@@ -2,7 +2,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../constants/theme';
 
-export default function GenericModal({ visible, title, onClose, children, titleStyle }) {
+export default function GenericModal({ visible, title, onClose, children, titleStyle, modalCardStyle, contentStyle }) {
     return (
         <Modal
             visible={visible}
@@ -13,7 +13,7 @@ export default function GenericModal({ visible, title, onClose, children, titleS
             <View style={styles.overlay}>
                 <Pressable style={styles.backdrop} onPress={onClose} />
 
-                <View style={styles.modalCard}>
+                <View style={[styles.modalCard, modalCardStyle]}>
                     <View style={styles.header}>
                         {typeof title === 'string' && title.trim().length > 0 ? (
                             <Text style={[styles.title, titleStyle]}>{title}</Text>
@@ -28,7 +28,7 @@ export default function GenericModal({ visible, title, onClose, children, titleS
                         </Pressable>
                     </View>
 
-                    <View style={styles.content}>{children}</View>
+                    <View style={[styles.content, contentStyle]}>{children}</View>
                 </View>
             </View>
         </Modal>
