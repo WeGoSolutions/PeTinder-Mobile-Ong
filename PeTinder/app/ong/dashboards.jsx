@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator, Text } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { useDashboardData } from '../../services/dashboardService';
 import { colors, scaleHeight } from '../../constants/theme';
 import DonutChart from '../../components/charts/DonutChart';
@@ -8,7 +9,13 @@ import OngPendenciasList from '../../components/ong/OngPendenciasList';
 
 export default function Dashboards() {
     const [donutResetSignal, setDonutResetSignal] = useState(0);
-    const { pets, adoptedCount, notAdoptedCount, pendingPets, loading, error } = useDashboardData();
+    const { pets, adoptedCount, notAdoptedCount, pendingPets, loading, error, refetch } = useDashboardData();
+
+    useFocusEffect(
+        useCallback(() => {
+            refetch();
+        }, [refetch])
+    );
 
     if (loading) {
         return (

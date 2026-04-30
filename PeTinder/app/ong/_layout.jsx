@@ -110,7 +110,7 @@ export default function OngTabsLayout() {
                             typeof route.params?.from === 'string' && route.params.from.trim().length > 0
                                 ? route.params.from
                                 : '/ong';
-                        return <SecondaryHeader title="Configuracoes" backTo={settingsBackTo} />;
+                        return <SecondaryHeader title="Configurações" backTo={settingsBackTo} />;
                     }
                     if (route.name === 'chat') {
                         const chatUserName =
@@ -246,20 +246,20 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     settingsButton: {
-        width: 42,
-        height: 42,
+        width: 44,
+        height: 44,
         alignItems: 'center',
         justifyContent: 'center',
     },
     backButton: {
-        width: 42,
-        height: 42,
+        width: 44,
+        height: 44,
         alignItems: 'center',
         justifyContent: 'center',
     },
     headerRightSpacer: {
-        width: 42,
-        height: 42,
+        width: 44,
+        height: 44,
     },
     avatarImage: {
         width: '100%',

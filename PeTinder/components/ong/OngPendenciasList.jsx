@@ -56,7 +56,7 @@ const renderNeedParts = (needs) => {
 export default function OngPendenciasList({ pets = [] }) {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Pets nao vacinados / vermifugados / castrados:</Text>
+            <Text style={styles.title}>Pets com pendencias</Text>
 
             <View style={styles.listShell}>
                 {pets.length === 0 ? (
@@ -101,9 +101,9 @@ const styles = StyleSheet.create({
         paddingBottom: scaleHeight(6),
     },
     title: {
-        fontSize: scaleFont(36),
-        lineHeight: scaleFont(42),
-        fontFamily: typography.fontFamily.poppins.bold,
+        fontSize: scaleFont(typography.fontSize.title),
+        fontFamily: typography.fontFamily.poppins.medium,
+        fontWeight: '500',
         color: colors.black,
         marginBottom: scaleHeight(14),
     },

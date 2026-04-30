@@ -10,14 +10,14 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import LikesBarChart from '../../components/charts/LikesBarChart';
 import OngInteressadoItem from '../../components/ong/OngInteressadoItem';
 import DynamicButton from '../../components/DynamicButton';
-import { usePets } from '../../services/petService';
+import { useDashboardData } from '../../services/dashboardService';
 import { getSession } from '../../services/sessionService';
 import { listarInteressadosDaOng } from '../../services/interessadosService';
 
 
 export default function Home() {
     const router = useRouter();
-    const { pets, adoptedCount, notAdoptedCount, loading: petsLoading, error: petsError } = usePets();
+    const { pets, refetch } = useDashboardData();
     const [interessados, setInteressados] = useState([]);
     const [isLoadingInteressados, setIsLoadingInteressados] = useState(true);
     const [ongId, setOngId] = useState('');
@@ -51,11 +51,12 @@ export default function Home() {
 
     useFocusEffect(
         useCallback(() => {
+            refetch();
             if (ongId) {
                 setIsLoadingInteressados(true);
                 loadInteressados();
             }
-        }, [loadInteressados, ongId])
+        }, [loadInteressados, ongId, refetch])
     );
 
     useEffect(() => {
