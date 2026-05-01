@@ -3,9 +3,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCallback, useEffect, useState } from 'react';
-import { useOngInfo } from '../../services/petService';
 import { getSession } from '../../services/sessionService';
+import { getOngImage } from '../../services/ongSettingsService';
 import { colors } from '../../constants/theme';
+import { resolveImageUri } from '../../utils/imageUri';
 
 const DEFAULT_ONG_NAME = 'ONG';
 const DEFAULT_ONG_IMAGE_URI = null;
@@ -15,6 +16,8 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
     const pathname = usePathname();
     const insets = useSafeAreaInsets();
     const [sessionName, setSessionName] = useState(null);
+    const [sessionImageUri, setSessionImageUri] = useState(ongImageUri);
+    const [imageError, setImageError] = useState(false);
 
     const loadSessionName = useCallback(async () => {
         try {
@@ -27,24 +30,48 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
         }
     }, []);
 
+    const loadOngImage = useCallback(async () => {
+        try {
+            const { ongId } = await getSession();
+            if (!ongId) {
+                setSessionImageUri(null);
+                return;
+            }
+
+            const imageUrl = await getOngImage(ongId);
+            setSessionImageUri(resolveImageUri(imageUrl));
+        } catch (error) {
+            setSessionImageUri(null);
+        }
+    }, []);
+
     useFocusEffect(
         useCallback(() => {
             loadSessionName();
-        }, [loadSessionName])
+            loadOngImage();
+        }, [loadSessionName, loadOngImage])
     );
 
     const displayName = sessionName || ongName;
 
+    useEffect(() => {
+        setImageError(false);
+    }, [sessionImageUri]);
+
     return (
         <View style={[styles.headerWrapper, { paddingTop: Math.max(insets.top, 8) + 8 }]}>
             <View style={styles.headerContainer}>
-                {/* <View style={styles.avatarContainer}>
-                    {ongImageUri ? (
-                        <Image source={{ uri: ongImageUri }} style={styles.avatarImage} />
+                <View style={styles.avatarContainer}>
+                    {sessionImageUri && !imageError ? (
+                        <Image
+                            source={{ uri: sessionImageUri }}
+                            style={styles.avatarImage}
+                            onError={() => setImageError(true)}
+                        />
                     ) : (
                         <Ionicons name="business-outline" size={20} color={colors.mauve} />
                     )}
-                </View> */}
+                </View>
                 <Text style={styles.headerName}>Olá, {displayName}!</Text>
             </View>
             <Pressable
@@ -244,6 +271,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         overflow: 'hidden',
+    },
+    avatarImage: {
+        width: '100%',
+        height: '100%',
     },
     settingsButton: {
         width: 44,

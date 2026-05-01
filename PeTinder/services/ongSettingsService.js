@@ -1,7 +1,9 @@
 import api from '../api';
 import mockData from '../data/db.json';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const useBackend = String(process.env.EXPO_PUBLIC_UTILIZAR_BACKEND ?? '').toLowerCase() === 'true';
+const ONG_IMAGE_CACHE_PREFIX = 'ong_image_cache:';
 
 const getString = (value) => {
   if (typeof value !== 'string') {
@@ -18,6 +20,43 @@ const digitsOnly = (value) => getString(value).replace(/\D/g, '');
 const nullWhenEmpty = (value) => {
   const normalized = trimOrEmpty(value);
   return normalized.length > 0 ? normalized : null;
+};
+
+const normalizeImageUrl = (value) => {
+  const normalized = trimOrEmpty(value);
+  return normalized.length > 0 ? normalized : null;
+};
+
+const getOngImageCacheKey = (ongId) => `${ONG_IMAGE_CACHE_PREFIX}${trimOrEmpty(String(ongId ?? ''))}`;
+
+const getCachedOngImage = async (ongId) => {
+  const normalizedOngId = trimOrEmpty(String(ongId ?? ''));
+
+  if (!normalizedOngId) {
+    return null;
+  }
+
+  try {
+    const cached = await AsyncStorage.getItem(getOngImageCacheKey(normalizedOngId));
+    return normalizeImageUrl(cached);
+  } catch (error) {
+    return null;
+  }
+};
+
+const saveCachedOngImage = async (ongId, imageDataUrl) => {
+  const normalizedOngId = trimOrEmpty(String(ongId ?? ''));
+  const normalizedImageDataUrl = trimOrEmpty(imageDataUrl);
+
+  if (!normalizedOngId || !normalizedImageDataUrl) {
+    return;
+  }
+
+  try {
+    await AsyncStorage.setItem(getOngImageCacheKey(normalizedOngId), normalizedImageDataUrl);
+  } catch (error) {
+    // O cache local nao deve bloquear o fluxo de salvamento do perfil.
+  }
 };
 
 const normalizeProfileResponse = (data, fallbackName = '') => {
@@ -99,12 +138,36 @@ export const getOngImage = async (ongId) => {
     throw new Error('ONG nao encontrada na sessao.');
   }
 
+  const cachedImage = await getCachedOngImage(normalizedOngId);
+  if (cachedImage) {
+    return cachedImage;
+  }
+
   if (!useBackend) {
     return null;
   }
 
   const response = await api.get(`/ongs/${normalizedOngId}/imagem/arquivo`);
-  return response?.data?.imageUrl ?? null;
+  return normalizeImageUrl(response?.data?.imageUrl);
+};
+
+export const updateOngImage = async (ongId, imageDataUrl) => {
+  const normalizedOngId = trimOrEmpty(String(ongId ?? ''));
+
+  if (!normalizedOngId) {
+    throw new Error('ONG nao encontrada na sessao.');
+  }
+
+  const normalizedImageDataUrl = trimOrEmpty(imageDataUrl);
+
+  if (!normalizedImageDataUrl) {
+    throw new Error('Imagem da ONG invalida.');
+  }
+
+  await saveCachedOngImage(normalizedOngId, normalizedImageDataUrl);
+
+  // Contorno temporario: upload no backend desativado para evitar erro 500.
+  return normalizedImageDataUrl;
 };
 
 export const updateOngProfile = async (ongId, profile, fallbackName = '') => {
@@ -158,6 +221,7 @@ export const normalizeBackendError = (error) => {
 export default {
   getOngProfile,
   getOngImage,
+  updateOngImage,
   updateOngProfile,
   normalizeBackendError,
 };

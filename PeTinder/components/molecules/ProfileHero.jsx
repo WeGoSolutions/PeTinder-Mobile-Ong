@@ -8,28 +8,48 @@ import AppText from '../atoms/AppText';
 /**
  * @typedef {Object} ProfileHeroProps
  * @property {string} orgName
+ * @property {string} [imageUri]
  * @property {boolean} isEditMode
  * @property {() => void} onEditPress
+ * @property {() => void} [onImagePress]
+ * @property {boolean} [disableImagePress]
  */
 
 /**
  * @param {ProfileHeroProps} props
  */
-export default function ProfileHero({ orgName, isEditMode, onEditPress }) {
+export default function ProfileHero({
+  orgName,
+  imageUri = '',
+  isEditMode,
+  onEditPress,
+  onImagePress,
+  disableImagePress = false,
+}) {
   const displayName = typeof orgName === 'string' && orgName.trim().length > 0 ? orgName : 'ONG';
 
   return (
     <View style={styles.container}>
-      <AvatarPlaceholder size={Sizes.avatar} editable={isEditMode} />
+      <AvatarPlaceholder
+        size={Sizes.avatar}
+        editable={isEditMode}
+        imageUri={imageUri}
+        onPress={isEditMode ? onImagePress : undefined}
+        disabled={disableImagePress}
+      />
 
       <View style={styles.content}>
         <AppText variant="greeting">Olá, {displayName}</AppText>
 
-        {!isEditMode ? (
+        {isEditMode ? (
+          <AppText variant="fieldLabel" secondary>
+            Toque na imagem para alterar a foto da ONG
+          </AppText>
+        ) : (
           <View style={styles.buttonWrapper}>
             <PillButton label="Editar Perfil" variant="outline" onPress={onEditPress} fullWidth />
           </View>
-        ) : null}
+        )}
       </View>
     </View>
   );

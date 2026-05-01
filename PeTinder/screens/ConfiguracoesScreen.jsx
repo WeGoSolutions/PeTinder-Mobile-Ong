@@ -1,15 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 import { Colors, Spacing } from '../theme';
 import { getSession, saveSession } from '../services/sessionService';
 import { logout } from '../services/logoutService';
 import {
+  getOngImage,
   getOngProfile,
   normalizeBackendError,
+  updateOngImage,
   updateOngProfile,
 } from '../services/ongSettingsService';
 import { validateCEP, validateEmail, validateURL } from '../utils/validators';
+import { resolveImageUri } from '../utils/imageUri';
 import AppText from '../components/atoms/AppText';
 import FooterActions from '../components/molecules/FooterActions';
 import FormSection from '../components/molecules/FormSection';
@@ -82,6 +86,9 @@ export default function ConfiguracoesScreen() {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [profileImageUri, setProfileImageUri] = useState('');
+  const [savedImageUri, setSavedImageUri] = useState('');
+  const [pendingImageDataUrl, setPendingImageDataUrl] = useState('');
   const [sessionState, setSessionState] = useState({ token: null, ongId: '', name: '' });
 
   const updateField = useCallback((field, value) => {
@@ -118,14 +125,22 @@ export default function ConfiguracoesScreen() {
 
       setSessionState(normalizedSession);
 
-      const profile = await getOngProfile(normalizedSession.ongId, normalizedSession.name);
+      const [profile, imageUrl] = await Promise.all([
+        getOngProfile(normalizedSession.ongId, normalizedSession.name),
+        getOngImage(normalizedSession.ongId).catch(() => null),
+      ]);
       const merged = {
         ...EMPTY_PROFILE,
         ...profile,
       };
 
+      const normalizedImageUri = resolveImageUri(imageUrl);
+
       setFormData(merged);
       setSavedData(merged);
+      setProfileImageUri(normalizedImageUri);
+      setSavedImageUri(normalizedImageUri);
+      setPendingImageDataUrl('');
     } catch (error) {
       Alert.alert('Erro', normalizeBackendError(error));
     } finally {
@@ -176,15 +191,61 @@ export default function ConfiguracoesScreen() {
     setIsEditMode(true);
   }, [activeTab]);
 
+  const handleImagePress = useCallback(async () => {
+    if (!isEditMode || isSaving || isLoading) {
+      return;
+    }
+
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+      if (!permission.granted) {
+        Alert.alert('Permissao necessaria', 'Permita acesso a galeria para alterar a imagem da ONG.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+        base64: true,
+      });
+
+      if (result.canceled || !result.assets?.length) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      const imageBase64 = String(asset?.base64 ?? '').trim();
+
+      if (!imageBase64) {
+        Alert.alert('Erro', 'Nao foi possivel processar a imagem selecionada.');
+        return;
+      }
+
+      const mimeType = String(asset?.mimeType ?? '').trim() || 'image/jpeg';
+      const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
+      const previewUri = String(asset?.uri ?? '').trim() || imageDataUrl;
+
+      setProfileImageUri(previewUri);
+      setPendingImageDataUrl(imageDataUrl);
+    } catch (error) {
+      Alert.alert('Erro', 'Nao foi possivel selecionar a imagem.');
+    }
+  }, [isEditMode, isLoading, isSaving]);
+
   const handleCancel = useCallback(() => {
     if (isSaving) {
       return;
     }
 
     setFormData(savedData);
+    setProfileImageUri(savedImageUri);
+    setPendingImageDataUrl('');
     setErrors({});
     setIsEditMode(false);
-  }, [isSaving, savedData]);
+  }, [isSaving, savedData, savedImageUri]);
 
   const handleSave = useCallback(async () => {
     if (isSaving || isLoading) {
@@ -207,8 +268,19 @@ export default function ConfiguracoesScreen() {
         },
         sessionState.name
       );
+
+      let nextImageUri = savedImageUri;
+
+      if (pendingImageDataUrl) {
+        const uploadedImageUrl = await updateOngImage(sessionState.ongId, pendingImageDataUrl);
+        nextImageUri = resolveImageUri(uploadedImageUrl) || pendingImageDataUrl;
+      }
+
       setFormData(updated);
       setSavedData(updated);
+      setProfileImageUri(nextImageUri);
+      setSavedImageUri(nextImageUri);
+      setPendingImageDataUrl('');
       setIsEditMode(false);
 
       await saveSession(sessionState.token, updated.nome, sessionState.ongId);
@@ -221,7 +293,15 @@ export default function ConfiguracoesScreen() {
     } finally {
       setIsSaving(false);
     }
-  }, [formData, isLoading, isSaving, sessionState, validateForm]);
+  }, [
+    formData,
+    isLoading,
+    isSaving,
+    pendingImageDataUrl,
+    savedImageUri,
+    sessionState,
+    validateForm,
+  ]);
 
   const handleLogout = useCallback(async () => {
     if (isSaving) {
@@ -353,7 +433,14 @@ export default function ConfiguracoesScreen() {
 
   return (
     <View style={styles.screen}>
-      <ProfileHero orgName={profileName} isEditMode={isEditMode} onEditPress={handleEditPress} />
+      <ProfileHero
+        orgName={profileName}
+        imageUri={profileImageUri}
+        isEditMode={isEditMode}
+        onEditPress={handleEditPress}
+        onImagePress={handleImagePress}
+        disableImagePress={isSaving}
+      />
 
       <TabBar tabs={MAIN_TABS} activeIndex={activeTab} onTabPress={handleMainTabPress} />
 
