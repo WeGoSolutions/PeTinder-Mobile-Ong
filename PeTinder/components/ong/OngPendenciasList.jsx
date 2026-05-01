@@ -1,6 +1,8 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, scaleFont, scaleHeight, scaleWidth, typography } from '../../constants/theme';
+import { resolveImageUri } from '../../utils/imageUri';
 
 const normalizeLabel = (value = '') =>
     value
@@ -53,6 +55,37 @@ const renderNeedParts = (needs) => {
     return parts;
 };
 
+const PendingPetCard = ({ pet }) => {
+    const [imageError, setImageError] = useState(false);
+    const resolvedImageUrl = useMemo(() => resolveImageUri(pet?.imageUrl), [pet?.imageUrl]);
+
+    useEffect(() => {
+        setImageError(false);
+    }, [resolvedImageUrl]);
+
+    return (
+        <View style={styles.card}>
+            {resolvedImageUrl && !imageError ? (
+                <Image
+                    source={{ uri: resolvedImageUrl }}
+                    style={styles.petImage}
+                    onError={() => setImageError(true)}
+                />
+            ) : (
+                <View style={styles.placeholderImage}>
+                    <Ionicons name="paw-outline" size={26} color={colors.mauve} />
+                </View>
+            )}
+
+            <Text style={styles.cardText}>
+                <Text style={styles.petNameText}>{pet?.name ?? 'Pet'}</Text>
+                <Text style={styles.baseText}> necessita de: </Text>
+                {renderNeedParts(pet?.needs)}
+            </Text>
+        </View>
+    );
+};
+
 export default function OngPendenciasList({ pets = [] }) {
     return (
         <View style={styles.container}>
@@ -71,21 +104,10 @@ export default function OngPendenciasList({ pets = [] }) {
                         nestedScrollEnabled={true}
                     >
                         {pets.map((pet, index) => (
-                            <View key={String(pet?.id ?? `${pet?.name}-${index}`)} style={styles.card}>
-                                {pet?.imageUrl ? (
-                                    <Image source={{ uri: pet.imageUrl }} style={styles.petImage} />
-                                ) : (
-                                    <View style={styles.placeholderImage}>
-                                        <Ionicons name="paw-outline" size={26} color={colors.mauve} />
-                                    </View>
-                                )}
-
-                                <Text style={styles.cardText}>
-                                    <Text style={styles.petNameText}>{pet?.name ?? 'Pet'}</Text>
-                                    <Text style={styles.baseText}> necessita de: </Text>
-                                    {renderNeedParts(pet?.needs)}
-                                </Text>
-                            </View>
+                            <PendingPetCard
+                                key={String(pet?.id ?? `${pet?.name}-${index}`)}
+                                pet={pet}
+                            />
                         ))}
                     </ScrollView>
                 )}

@@ -16,7 +16,6 @@ export default function DonutChart({
 }) {
   const [selectedSlice, setSelectedSlice] = useState(null);
   const total = adoptedCount + notAdoptedCount;
-  const boost = Math.max(1, Math.round(total * 0.08));
 
   const centerValue =
     selectedSlice === 'adopted'
@@ -32,16 +31,16 @@ export default function DonutChart({
     return [
       {
         key: 'adopted',
-        value: selectedSlice === 'adopted' ? adoptedValue + boost : adoptedValue,
+        value: adoptedValue,
         color: selectedSlice && selectedSlice !== 'adopted' ? '#E2447699' : colors.primaryPink,
       },
       {
         key: 'notAdopted',
-        value: selectedSlice === 'notAdopted' ? notAdoptedValue + boost : notAdoptedValue,
+        value: notAdoptedValue,
         color: selectedSlice && selectedSlice !== 'notAdopted' ? '#1E1E1E99' : colors.black,
       },
     ];
-  }, [selectedSlice, adoptedCount, notAdoptedCount, total, boost]);
+  }, [selectedSlice, adoptedCount, notAdoptedCount, total]);
 
   const chartSize = scaleWidth(170);
   const chartRadius = chartSize / 2;

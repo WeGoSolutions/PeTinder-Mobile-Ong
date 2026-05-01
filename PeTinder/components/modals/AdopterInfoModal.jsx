@@ -1,7 +1,9 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/theme';
 import GenericModal from '../GenericModal';
+import { resolveImageUri } from '../../utils/imageUri';
 
 export default function AdopterInfoModal({
     visible,
@@ -9,6 +11,16 @@ export default function AdopterInfoModal({
     petName,
     adopterInfo,
 }) {
+    const [imageError, setImageError] = useState(false);
+    const resolvedImageUrl = useMemo(
+        () => resolveImageUri(adopterInfo?.imagemUrl),
+        [adopterInfo?.imagemUrl]
+    );
+
+    useEffect(() => {
+        setImageError(false);
+    }, [resolvedImageUrl]);
+
     return (
         <GenericModal
             visible={visible}
@@ -17,10 +29,11 @@ export default function AdopterInfoModal({
         >
             {adopterInfo ? (
                 <View style={styles.adotanteInfo}>
-                    {adopterInfo.imagemUrl ? (
+                    {resolvedImageUrl && !imageError ? (
                         <Image
-                            source={{ uri: adopterInfo.imagemUrl }}
+                            source={{ uri: resolvedImageUrl }}
                             style={styles.adotanteImage}
+                            onError={() => setImageError(true)}
                         />
                     ) : (
                         <View style={styles.adotantePlaceholder}>

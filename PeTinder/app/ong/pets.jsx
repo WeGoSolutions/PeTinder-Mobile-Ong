@@ -7,6 +7,7 @@ import PetModalFlow from '../../components/modals/PetModalFlow';
 import { listarPetsDaOng } from '../../services/petApiService';
 import { getSession } from '../../services/sessionService';
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { resolveImageUri } from '../../utils/imageUri';
 
 
 export default function Pets() {
@@ -47,7 +48,7 @@ export default function Pets() {
 
             const content = result.data.content || [];
 
-            const firstImageUrl = content[0]?.imageUrl?.[0];
+            const firstImageUrl = resolveImageUri(content[0]?.imageUrl?.[0]);
             if (firstImageUrl) {
                 try {
                     const resp = await fetch(firstImageUrl);

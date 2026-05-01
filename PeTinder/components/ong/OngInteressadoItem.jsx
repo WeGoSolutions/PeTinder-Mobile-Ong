@@ -1,7 +1,9 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { colors } from '../../constants/theme';
+import { resolveImageUri } from '../../utils/imageUri';
 
 export default function OngInteressadoItem({
     userName,
@@ -13,12 +15,22 @@ export default function OngInteressadoItem({
 }) {
     const router = useRouter();
     const displayName = userName || 'Usuario';
+    const [imageError, setImageError] = useState(false);
+    const resolvedImageUrl = useMemo(() => resolveImageUri(imageUrl), [imageUrl]);
+
+    useEffect(() => {
+        setImageError(false);
+    }, [resolvedImageUrl]);
 
     return (
         <View style={styles.item}>
             <View style={styles.headerContainer}>
-                {imageUrl ? (
-                    <Image source={{ uri: imageUrl }} style={styles.avatar} />
+                {resolvedImageUrl && !imageError ? (
+                    <Image
+                        source={{ uri: resolvedImageUrl }}
+                        style={styles.avatar}
+                        onError={() => setImageError(true)}
+                    />
                 ) : (
                     <View style={styles.avatarPlaceholder}>
                         <Ionicons name="person-outline" size={20} color={colors.mauve} />

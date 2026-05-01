@@ -1,8 +1,10 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/theme';
 import GenericModal from '../GenericModal';
 import DynamicButton from '../DynamicButton';
+import { resolveImageUri } from '../../utils/imageUri';
 
 export default function PetDetailsModal({
     visible,
@@ -12,8 +14,14 @@ export default function PetDetailsModal({
     onOpenStatus,
     pet,
 }) {
-    const modalImageUrl = pet?.imageUrl?.[0] || '';
+    const [imageError, setImageError] = useState(false);
+    const rawImageUrl = Array.isArray(pet?.imageUrl) ? pet.imageUrl[0] : pet?.imageUrl;
+    const modalImageUrl = useMemo(() => resolveImageUri(rawImageUrl), [rawImageUrl]);
     const isAdopted = Array.isArray(pet?.status) && pet.status.includes('ADOPTED');
+
+    useEffect(() => {
+        setImageError(false);
+    }, [modalImageUrl]);
 
     return (
         <GenericModal
@@ -23,11 +31,12 @@ export default function PetDetailsModal({
             titleStyle={{ fontSize: 24 }}
         >
             <View style={[styles.imageContainer, isAdopted && styles.isAdopted]}>
-                {modalImageUrl ? (
+                {modalImageUrl && !imageError ? (
                     <Image
                         source={{ uri: modalImageUrl }}
                         style={styles.image}
                         resizeMode="cover"
+                        onError={() => setImageError(true)}
                     />
                 ) : (
                     <View style={styles.placeholderContainer}>

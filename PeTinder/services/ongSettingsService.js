@@ -92,6 +92,21 @@ export const getOngProfile = async (ongId, fallbackName = '') => {
   return normalizeProfileResponse(response?.data, fallbackName);
 };
 
+export const getOngImage = async (ongId) => {
+  const normalizedOngId = trimOrEmpty(String(ongId ?? ''));
+
+  if (!normalizedOngId) {
+    throw new Error('ONG nao encontrada na sessao.');
+  }
+
+  if (!useBackend) {
+    return null;
+  }
+
+  const response = await api.get(`/ongs/${normalizedOngId}/imagem/arquivo`);
+  return response?.data?.imageUrl ?? null;
+};
+
 export const updateOngProfile = async (ongId, profile, fallbackName = '') => {
   const normalizedOngId = trimOrEmpty(String(ongId ?? ''));
 
@@ -142,6 +157,7 @@ export const normalizeBackendError = (error) => {
 
 export default {
   getOngProfile,
+  getOngImage,
   updateOngProfile,
   normalizeBackendError,
 };
