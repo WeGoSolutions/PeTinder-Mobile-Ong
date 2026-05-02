@@ -16,7 +16,6 @@ export default function DonutChart({
 }) {
   const [selectedSlice, setSelectedSlice] = useState(null);
   const total = adoptedCount + notAdoptedCount;
-  const boost = Math.max(1, Math.round(total * 0.08));
 
   const centerValue =
     selectedSlice === 'adopted'
@@ -32,16 +31,16 @@ export default function DonutChart({
     return [
       {
         key: 'adopted',
-        value: selectedSlice === 'adopted' ? adoptedValue + boost : adoptedValue,
+        value: adoptedValue,
         color: selectedSlice && selectedSlice !== 'adopted' ? '#E2447699' : colors.primaryPink,
       },
       {
         key: 'notAdopted',
-        value: selectedSlice === 'notAdopted' ? notAdoptedValue + boost : notAdoptedValue,
-        color: selectedSlice && selectedSlice !== 'notAdopted' ? '#1E1E1E99' : colors.black,
+        value: notAdoptedValue,
+        color: selectedSlice && selectedSlice !== 'notAdopted' ? '#80465D99' : '#80465D',
       },
     ];
-  }, [selectedSlice, adoptedCount, notAdoptedCount, total, boost]);
+  }, [selectedSlice, adoptedCount, notAdoptedCount, total]);
 
   const chartSize = scaleWidth(170);
   const chartRadius = chartSize / 2;
@@ -107,7 +106,7 @@ export default function DonutChart({
               setSelectedSlice('notAdopted');
             }}
           >
-            <View style={[styles.legendDot, { backgroundColor: colors.black }]} />
+            <View style={[styles.legendDot, { backgroundColor: '#80465D' }]} />
             <Text style={[styles.legendText, selectedSlice === 'notAdopted' && styles.legendTextActive]}>
               Não adotados
             </Text>
@@ -159,13 +158,13 @@ const styles = StyleSheet.create({
     marginBottom: scaleHeight(12),
   },
   legendDot: {
-    width: scaleWidth(12),
-    height: scaleWidth(12),
-    borderRadius: scaleWidth(6),
+    width: scaleWidth(14),
+    height: scaleWidth(14),
+    borderRadius: scaleWidth(7),
     marginRight: scaleWidth(8),
   },
   legendText: {
-    fontSize: scaleFont(typography.fontSize.donutLegend),
+    fontSize: scaleFont(typography.fontSize.donutLegend + 3),
     fontFamily: typography.fontFamily.inter.regular,
     fontWeight: '400',
     color: colors.black,

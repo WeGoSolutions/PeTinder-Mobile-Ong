@@ -1,10 +1,11 @@
 import axios from "axios";
+import { sanitizeBaseUrl } from './utils/imageUri';
 
 const env = process.env;
 const useBackend = String(env.EXPO_PUBLIC_UTILIZAR_BACKEND ?? '').toLowerCase() === 'true';
 
-const backendApiUrl = env.EXPO_PUBLIC_BACKEND_API_URL;
-const jsonServerUrl = env.EXPO_PUBLIC_JSON_SERVER_URL;
+const backendApiUrl = sanitizeBaseUrl(env.EXPO_PUBLIC_BACKEND_API_URL);
+const jsonServerUrl = sanitizeBaseUrl(env.EXPO_PUBLIC_JSON_SERVER_URL);
 
 const baseURL = useBackend ? backendApiUrl : jsonServerUrl;
 
@@ -13,7 +14,7 @@ if (!baseURL) {
 }
 
 const api = axios.create({
-    baseURL
+    baseURL,
 });
 
 export default api;

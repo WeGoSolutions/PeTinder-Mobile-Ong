@@ -3,7 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, scaleHeight, scaleWidth, scaleFont, layout } from '../constants/theme';
 
 export default function Header({ 
-  title = 'Olá {ONG}', 
+  title = 'Olá, {ONG}', 
   showSettingsIcon = true, 
   onSettingsPress 
 }) {

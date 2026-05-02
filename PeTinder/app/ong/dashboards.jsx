@@ -1,19 +1,23 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { View, StyleSheet, ScrollView, ActivityIndicator, Text } from 'react-native';
-import { usePets, useOngInfo } from '../../services/petService';
+import { useFocusEffect } from 'expo-router';
+import { useDashboardData } from '../../services/dashboardService';
 import { colors, scaleHeight } from '../../constants/theme';
 import DonutChart from '../../components/charts/DonutChart';
 import LikesBarChart from '../../components/charts/LikesBarChart';
+import OngPendenciasList from '../../components/ong/OngPendenciasList';
 
 export default function Dashboards() {
     const [donutResetSignal, setDonutResetSignal] = useState(0);
-    const { pets, adoptedCount, notAdoptedCount, loading: petsLoading, error: petsError } = usePets();
-    const { loading: ongLoading, error: ongError } = useOngInfo();
+    const { pets, adoptedCount, notAdoptedCount, pendingPets, loading, error, refetch } = useDashboardData();
 
-    const isLoading = petsLoading || ongLoading;
-    const hasError = petsError || ongError;
+    useFocusEffect(
+        useCallback(() => {
+            refetch();
+        }, [refetch])
+    );
 
-    if (isLoading) {
+    if (loading) {
         return (
             <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={colors.primaryPink} />
@@ -21,7 +25,7 @@ export default function Dashboards() {
         );
     }
 
-    if (hasError) {
+    if (error) {
         return (
             <View style={styles.errorContainer}>
                 <Text style={styles.errorText}>Erro ao carregar dados. Tente novamente.</Text>
@@ -47,6 +51,8 @@ export default function Dashboards() {
                     pets={pets}
                     maxVisibleBars={6}
                 />
+
+                <OngPendenciasList pets={pendingPets} />
             </ScrollView>
         </View>
     );

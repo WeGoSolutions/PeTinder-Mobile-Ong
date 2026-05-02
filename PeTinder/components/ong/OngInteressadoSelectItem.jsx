@@ -1,6 +1,8 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/theme';
+import { resolveImageUri } from '../../utils/imageUri';
 
 export default function OngInteressadoSelectItem({
     name,
@@ -8,13 +10,21 @@ export default function OngInteressadoSelectItem({
     onPress,
     accessibilityLabel = 'Selecionar interessado',
 }) {
+    const [imageError, setImageError] = useState(false);
+    const resolvedImageUrl = useMemo(() => resolveImageUri(avatarUri), [avatarUri]);
+
+    useEffect(() => {
+        setImageError(false);
+    }, [resolvedImageUrl]);
+
     return (
         <View style={styles.item}>
             <View style={styles.headerContainer}>
-                {avatarUri ? (
+                {resolvedImageUrl && !imageError ? (
                     <Image
-                        source={{ uri: avatarUri }}
+                        source={{ uri: resolvedImageUrl }}
                         style={styles.avatar}
+                        onError={() => setImageError(true)}
                     />
                 ) : (
                     <View style={styles.avatarPlaceholder}>

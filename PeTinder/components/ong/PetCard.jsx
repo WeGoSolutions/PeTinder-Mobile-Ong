@@ -1,7 +1,9 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { colors } from '../../constants/theme';
+import { resolveImageUri } from '../../utils/imageUri';
 
 export default function PetCard({
     id,
@@ -20,6 +22,12 @@ export default function PetCard({
     onPress,
 }) {
     const router = useRouter();
+    const [imageError, setImageError] = useState(false);
+    const resolvedImageUrl = useMemo(() => resolveImageUri(imageUrl), [imageUrl]);
+
+    useEffect(() => {
+        setImageError(false);
+    }, [resolvedImageUrl]);
 
     const handleEdit = () => {
         router.push({
@@ -50,11 +58,12 @@ export default function PetCard({
             accessibilityLabel={`Editar pet ${name || 'sem nome'}`}
         >
             <View style={styles.imageContainer}>
-                {imageUrl ? (
+                {resolvedImageUrl && !imageError ? (
                     <Image
-                        source={{ uri: imageUrl }}
+                        source={{ uri: resolvedImageUrl }}
                         style={styles.image}
                         resizeMode="cover"
+                        onError={() => setImageError(true)}
                     />
                 ) : (
                     <View style={styles.placeholderContainer}>
