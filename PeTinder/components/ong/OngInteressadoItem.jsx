@@ -22,8 +22,26 @@ export default function OngInteressadoItem({
         setImageError(false);
     }, [resolvedImageUrl]);
 
+    const handleOpenChat = () => {
+        router.push({
+            pathname: '/ong/chat',
+            params: {
+                userId: String(userId ?? ''),
+                petId: String(petId ?? ''),
+                userName: String(displayName),
+                backTo: '/ong/interessados',
+            },
+        });
+    };
+
+
     return (
-        <View style={styles.item}>
+        <Pressable
+            style={styles.item}
+            onPress={handleOpenChat}
+            accessibilityRole="button"
+            accessibilityLabel="Ir para chat"
+        >
             <View style={styles.headerContainer}>
                 {resolvedImageUrl && !imageError ? (
                     <Image
@@ -43,25 +61,11 @@ export default function OngInteressadoItem({
                 </View>
             </View>
             <View style={styles.redirecionarContainer}>
-                <Pressable
-                    style={styles.forwardButton}
-                    onPress={() =>
-                        router.push({
-                            pathname: '/ong/chat',
-                            params: {
-                                userId: String(userId ?? ''),
-                                petId: String(petId ?? ''),
-                                userName: String(displayName),
-                            },
-                        })
-                    }
-                    accessibilityRole="button"
-                    accessibilityLabel="Ir para chat"
-                >
+                <View style={styles.forwardButton}>
                     <Ionicons name="chevron-forward" size={28} color={colors.black} />
-                </Pressable>
+                </View>
             </View>
-        </View>
+        </Pressable>
     );
 }
 

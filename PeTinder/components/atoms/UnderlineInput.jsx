@@ -1,6 +1,5 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Alert,
   Linking,
   StyleSheet,
   TextInput,
@@ -9,6 +8,7 @@ import {
 } from 'react-native';
 import { Colors, Opacity, Sizes, Spacing, Typography } from '../../theme';
 import AppText from './AppText';
+import Toast from '../Toast';
 
 const HIT_SLOP = {
   top: Spacing.sm,
@@ -41,6 +41,30 @@ export default function UnderlineInput({
   error,
 }) {
   const displayValue = typeof value === 'string' ? value : '';
+  const [toast, setToast] = useState({ visible: false, title: '', message: '', type: 'info' });
+  const toastTimeoutRef = useRef(null);
+
+  const showToast = useCallback((title, message, type = 'info', duration = 2200) => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+
+    setToast({ visible: true, title, message, type });
+
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast((prev) => ({ ...prev, visible: false }));
+      toastTimeoutRef.current = null;
+    }, duration);
+  }, []);
+
+  useEffect(
+    () => () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    },
+    []
+  );
 
   const handleOpenLink = useCallback(async () => {
     if (!displayValue) {
@@ -50,9 +74,9 @@ export default function UnderlineInput({
     try {
       await Linking.openURL(displayValue);
     } catch (openError) {
-      Alert.alert('Link invalido', 'Nao foi possivel abrir o link.');
+      showToast('Link inválido', 'Não foi possível abrir o link.', 'error');
     }
-  }, [displayValue]);
+  }, [displayValue, showToast]);
 
   const canEdit = editable && typeof onChangeText === 'function';
   const showLink = isLink && !canEdit;
@@ -95,6 +119,8 @@ export default function UnderlineInput({
           {error}
         </AppText>
       ) : null}
+
+      <Toast visible={toast.visible} title={toast.title} message={toast.message} type={toast.type} />
     </View>
   );
 }

@@ -35,7 +35,7 @@ export default function PetCard({
             params: {
                 mode: 'edit',
                 petId: String(id),
-                from: '/ong/pets',
+                backTo: '/ong/pets',
                 nome: name || '',
                 idade: idade !== undefined && idade !== null ? String(idade) : '',
                 porte: porte || '',
@@ -84,14 +84,14 @@ export default function PetCard({
 const styles = StyleSheet.create({
     card: {
         borderWidth: 6,
-        borderColor: colors.mauve,
         borderRadius: 12,
         overflow: 'hidden',
-        backgroundColor: colors.mauve,
-    },
-    cardAdopted: {
         borderColor: colors.strongPink,
         backgroundColor: colors.strongPink,
+    },
+    cardAdopted: {
+        borderColor: colors.mauve,
+        backgroundColor: colors.mauve,
     },
     imageContainer: {
         height: 165,

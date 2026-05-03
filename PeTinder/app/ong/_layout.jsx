@@ -11,6 +11,18 @@ import { resolveImageUri } from '../../utils/imageUri';
 const DEFAULT_ONG_NAME = 'ONG';
 const DEFAULT_ONG_IMAGE_URI = null;
 
+const getStringParam = (value) => {
+    if (typeof value === 'string') {
+        return value;
+    }
+
+    if (Array.isArray(value) && typeof value[0] === 'string') {
+        return value[0];
+    }
+
+    return '';
+};
+
 function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE_URI }) {
     const router = useRouter();
     const pathname = usePathname();
@@ -80,7 +92,7 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
                     router.push({
                         pathname: '/ong/configuracoes',
                         params: {
-                            from: pathname,
+                            backTo: pathname,
                         },
                     })
                 }
@@ -133,27 +145,22 @@ export default function OngTabsLayout() {
                 headerShown: true,
                 header: () => {
                     if (route.name === 'configuracoes') {
-                        const settingsBackTo =
-                            typeof route.params?.from === 'string' && route.params.from.trim().length > 0
-                                ? route.params.from
-                                : '/ong';
+                        const backToParam = getStringParam(route.params?.backTo).trim();
+                        const fromParam = getStringParam(route.params?.from).trim();
+                        const settingsBackTo = backToParam.length > 0 ? backToParam : (fromParam.length > 0 ? fromParam : '/ong');
                         return <SecondaryHeader title="Configurações" backTo={settingsBackTo} />;
                     }
                     if (route.name === 'chat') {
-                        const chatUserName =
-                            typeof route.params?.userName === 'string' && route.params.userName.trim().length > 0
-                                ? route.params.userName
-                                : 'Chat';
+                        const userNameParam = getStringParam(route.params?.userName).trim();
+                        const chatUserName = userNameParam.length > 0 ? userNameParam : 'Chat';
                         return <SecondaryHeader title={chatUserName} />;
                     }
                     if (route.name === 'petForm') {
-                        const petFormMode =
-                            typeof route.params?.mode === 'string' ? route.params.mode.trim().toLowerCase() : '';
+                        const petFormMode = getStringParam(route.params?.mode).trim().toLowerCase();
                         const petFormTitle = petFormMode === 'edit' ? 'Edição de Pet' : 'Adição de Pet';
-                        const petFormBackTo =
-                            typeof route.params?.from === 'string' && route.params.from.trim().length > 0
-                                ? route.params.from
-                                : '/ong/pets';
+                        const backToParam = getStringParam(route.params?.backTo).trim();
+                        const fromParam = getStringParam(route.params?.from).trim();
+                        const petFormBackTo = backToParam.length > 0 ? backToParam : (fromParam.length > 0 ? fromParam : '/ong/pets');
                         return <SecondaryHeader title={petFormTitle} backTo={petFormBackTo} />;
                     }
                     return <OngHeader />;
