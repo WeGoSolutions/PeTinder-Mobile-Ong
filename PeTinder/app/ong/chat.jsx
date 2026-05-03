@@ -618,8 +618,9 @@ export default function Chat() {
             <SwipeBackGesture onSwipeBack={handleGestureBack}>
                 <KeyboardAvoidingView
                     style={styles.container}
-                    behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                    keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 50 : 0}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 50 : insets.top + 60}
+                    enabled={true}
                 >
                     {Boolean(error) && <Text style={styles.errorBanner}>{error}</Text>}
 
@@ -680,7 +681,7 @@ export default function Chat() {
                         }
                     />
 
-                    <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+                    <View style={[styles.inputContainer, { paddingBottom: insets.bottom || 8 }]}>
                         <Pressable
                             style={({ pressed }) => [
                                 styles.attachButton,
@@ -960,9 +961,9 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         flexDirection: 'row',
-        alignItems: 'flex-end',
+        alignItems: 'center',
         paddingHorizontal: 12,
-        paddingTop: 12,
+        paddingTop: 8,
         borderTopWidth: 1,
         borderTopColor: colors.roseSurface,
         gap: 8,
@@ -982,7 +983,11 @@ const styles = StyleSheet.create({
         borderColor: colors.roseBorder,
         borderRadius: 12,
         paddingHorizontal: 12,
-        paddingVertical: 10,
+        paddingVertical: 6,
+        minHeight: 40,
+        maxHeight: 80,
+        alignSelf: 'center',
+        textAlignVertical: 'center',
         fontSize: 14,
         maxHeight: 100,
         color: colors.textStrong,
