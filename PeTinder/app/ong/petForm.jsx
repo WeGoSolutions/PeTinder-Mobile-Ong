@@ -7,6 +7,7 @@ import PetFormInput from '../../components/ong/PetFormInput';
 import Tag from '../../components/ong/Tag';
 import Toast from '../../components/Toast';
 import DynamicButton from '../../components/DynamicButton';
+import SwipeBackGesture from '../../components/SwipeBackGesture';
 import { getSession } from '../../services/sessionService';
 import { atualizarPet, criarPet } from '../../services/petApiService';
 
@@ -29,8 +30,20 @@ const formatAssetName = (asset, index) => {
     return `pet-image-${Date.now()}-${index + 1}.${extension}`;
 };
 
+const getStringParam = (value) => {
+    if (typeof value === 'string') {
+        return value;
+    }
+
+    if (Array.isArray(value) && typeof value[0] === 'string') {
+        return value[0];
+    }
+
+    return '';
+};
+
 export default function PetForm() {
-    const { mode, petId, nome: paramNome, idade: paramIdade, porte: paramPorte, tags: paramTags, descricao: paramDescricao, isCastrado: paramIsCastrado, isVermifugo: paramIsVermifugo, isVacinado: paramIsVacinado, sexo: paramSexo, imageUrls: paramImageUrls } = useLocalSearchParams();
+    const { mode, petId, nome: paramNome, idade: paramIdade, porte: paramPorte, tags: paramTags, descricao: paramDescricao, isCastrado: paramIsCastrado, isVermifugo: paramIsVermifugo, isVacinado: paramIsVacinado, sexo: paramSexo, imageUrls: paramImageUrls, from: paramFrom, backTo: paramBackTo } = useLocalSearchParams();
     const router = useRouter();
     const normalizedMode = typeof mode === 'string' ? mode.trim().toLowerCase() : '';
     const isEdit = normalizedMode === 'edit';
@@ -359,174 +372,193 @@ export default function PetForm() {
         }
     };
 
-    return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.section}>
-                <PetFormInput
-                    label="Nome do Pet"
-                    value={nome}
-                    onChangeText={setNome}
-                    placeholder="Ex: Luna"
-                    error={errors.nome}
-                />
+    const handleGestureBack = useCallback(() => {
+        const backToParam = getStringParam(paramBackTo).trim();
+        const fromParam = getStringParam(paramFrom).trim();
 
-                <View style={styles.ageRow}>
-                    <View style={styles.ageValue}>
-                        <PetFormInput
-                            label="Idade"
-                            value={idadeInput}
-                            onChangeText={setIdadeInput}
-                            placeholder="Ex: 2"
-                            keyboardType="decimal-pad"
-                            error={errors.idade}
-                        />
+        if (backToParam.length > 0) {
+            router.replace(backToParam);
+            return;
+        }
+
+        if (fromParam.length > 0) {
+            router.replace(fromParam);
+            return;
+        }
+
+        router.replace('/ong/pets');
+    }, [paramBackTo, paramFrom, router]);
+
+    return (
+        <SwipeBackGesture onSwipeBack={handleGestureBack}>
+            <ScrollView contentContainerStyle={styles.container}>
+                <View style={styles.section}>
+                    <PetFormInput
+                        label="Nome do Pet"
+                        value={nome}
+                        onChangeText={setNome}
+                        placeholder="Ex: Luna"
+                        error={errors.nome}
+                    />
+
+                    <View style={styles.ageRow}>
+                        <View style={styles.ageValue}>
+                            <PetFormInput
+                                label="Idade"
+                                value={idadeInput}
+                                onChangeText={setIdadeInput}
+                                placeholder="Ex: 2"
+                                keyboardType="decimal-pad"
+                                error={errors.idade}
+                            />
+                        </View>
+
+                        <View style={styles.ageUnit}>
+                            <Text style={styles.groupLabel}>Unidade</Text>
+                            <View style={styles.optionRow}>
+                                {['anos', 'meses'].map((item) => (
+                                    <Pressable
+                                        key={item}
+                                        style={[styles.optionChip, idadeUnidade === item && styles.optionChipActive]}
+                                        onPress={() => setIdadeUnidade(item)}
+                                    >
+                                        <Text style={[styles.optionText, idadeUnidade === item && styles.optionTextActive]}>{item}</Text>
+                                    </Pressable>
+                                ))}
+                            </View>
+                        </View>
                     </View>
 
-                    <View style={styles.ageUnit}>
-                        <Text style={styles.groupLabel}>Unidade</Text>
+                    <View style={styles.group}>
+                        <Text style={styles.groupLabel}>Porte</Text>
                         <View style={styles.optionRow}>
-                            {['anos', 'meses'].map((item) => (
+                            {['Pequeno', 'Médio', 'Grande'].map((item) => (
                                 <Pressable
                                     key={item}
-                                    style={[styles.optionChip, idadeUnidade === item && styles.optionChipActive]}
-                                    onPress={() => setIdadeUnidade(item)}
+                                    style={[styles.optionChip, porte === item && styles.optionChipActive]}
+                                    onPress={() => setPorte(item)}
                                 >
-                                    <Text style={[styles.optionText, idadeUnidade === item && styles.optionTextActive]}>{item}</Text>
+                                    <Text style={[styles.optionText, porte === item && styles.optionTextActive]}>{item}</Text>
                                 </Pressable>
                             ))}
                         </View>
+                        {errors.porte ? <Text style={styles.errorText}>{errors.porte}</Text> : null}
                     </View>
-                </View>
 
-                <View style={styles.group}>
-                    <Text style={styles.groupLabel}>Porte</Text>
-                    <View style={styles.optionRow}>
-                        {['Pequeno', 'Médio', 'Grande'].map((item) => (
-                            <Pressable
-                                key={item}
-                                style={[styles.optionChip, porte === item && styles.optionChipActive]}
-                                onPress={() => setPorte(item)}
-                            >
-                                <Text style={[styles.optionText, porte === item && styles.optionTextActive]}>{item}</Text>
-                            </Pressable>
-                        ))}
-                    </View>
-                    {errors.porte ? <Text style={styles.errorText}>{errors.porte}</Text> : null}
-                </View>
-
-                <View style={styles.group}>
-                    <Text style={styles.groupLabel}>Tags ({selectedTags.length}/{MAX_TAGS})</Text>
-                    {ALL_TAGS.map((row, rowIndex) => (
-                        <View key={`tag-row-${rowIndex}`} style={styles.tagRow}>
-                            {row.map((tag) => {
-                                const isSelected = selectedTags.includes(tag);
-                                return (
-                                    <Tag
-                                        key={tag}
-                                        tagName={tag}
-                                        isDisabled={!isSelected}
-                                        onPress={() => handleTagToggle(tag)}
-                                    />
-                                );
-                            })}
-                        </View>
-                    ))}
-                    {errors.tags ? <Text style={styles.errorText}>{errors.tags}</Text> : null}
-                </View>
-
-                <PetFormInput
-                    label="Descrição"
-                    value={descricao}
-                    onChangeText={setDescricao}
-                    placeholder="Conte sobre o pet"
-                    multiline
-                    numberOfLines={4}
-                    maxLength={500}
-                    error={errors.descricao}
-                />
-
-                <View style={styles.group}>
-                    <Text style={styles.groupLabel}>Sexo</Text>
-                    <View style={styles.optionRow}>
-                        {[
-                            { label: 'Fêmea', value: 'FEMEA' },
-                            { label: 'Macho', value: 'MACHO' },
-                        ].map((item) => (
-                            <Pressable
-                                key={item.value}
-                                style={[styles.optionChip, sexo === item.value && styles.optionChipActive]}
-                                onPress={() => setSexo(item.value)}
-                            >
-                                <Text style={[styles.optionText, sexo === item.value && styles.optionTextActive]}>{item.label}</Text>
-                            </Pressable>
-                        ))}
-                    </View>
-                    {errors.sexo ? <Text style={styles.errorText}>{errors.sexo}</Text> : null}
-                </View>
-
-                <View style={styles.group}>
-                    <Text style={styles.groupLabel}>Cuidados</Text>
-                    <View style={styles.optionRow}>
-                        <Pressable
-                            style={[styles.optionChip, isCastrado && styles.optionChipActive]}
-                            onPress={() => setIsCastrado((prev) => !prev)}
-                        >
-                            <Text style={[styles.optionText, isCastrado && styles.optionTextActive]}>Castrado</Text>
-                        </Pressable>
-
-                        <Pressable
-                            style={[styles.optionChip, isVermifugo && styles.optionChipActive]}
-                            onPress={() => setIsVermifugo((prev) => !prev)}
-                        >
-                            <Text style={[styles.optionText, isVermifugo && styles.optionTextActive]}>Vermífugo</Text>
-                        </Pressable>
-
-                        <Pressable
-                            style={[styles.optionChip, isVacinado && styles.optionChipActive]}
-                            onPress={() => setIsVacinado((prev) => !prev)}
-                        >
-                            <Text style={[styles.optionText, isVacinado && styles.optionTextActive]}>Vacinado</Text>
-                        </Pressable>
-                    </View>
-                </View>
-
-                <View style={styles.group}>
-                    <Text style={styles.groupLabel}>Imagens do pet ({images.length}/{MAX_IMAGES})</Text>
-                    <Pressable style={styles.addImageButton} onPress={handleAddImages}>
-                        <Text style={styles.addImageButtonText}>Adicionar imagens</Text>
-                    </Pressable>
-
-                    {errors.images ? <Text style={styles.errorText}>{errors.images}</Text> : null}
-
-                    <View style={styles.imagesGrid}>
-                        {images.map((item, index) => (
-                            <View key={`${item.uri}-${index}`} style={styles.imageItem}>
-                                <Image source={{ uri: item.uri }} style={styles.imagePreview} />
-                                <Pressable
-                                    style={styles.removeImageButton}
-                                    onPress={() => handleRemoveImage(index)}
-                                >
-                                    <Text style={styles.removeImageText}>X</Text>
-                                </Pressable>
+                    <View style={styles.group}>
+                        <Text style={styles.groupLabel}>Tags ({selectedTags.length}/{MAX_TAGS})</Text>
+                        {ALL_TAGS.map((row, rowIndex) => (
+                            <View key={`tag-row-${rowIndex}`} style={styles.tagRow}>
+                                {row.map((tag) => {
+                                    const isSelected = selectedTags.includes(tag);
+                                    return (
+                                        <Tag
+                                            key={tag}
+                                            tagName={tag}
+                                            isDisabled={!isSelected}
+                                            onPress={() => handleTagToggle(tag)}
+                                        />
+                                    );
+                                })}
                             </View>
                         ))}
+                        {errors.tags ? <Text style={styles.errorText}>{errors.tags}</Text> : null}
                     </View>
+
+                    <PetFormInput
+                        label="Descrição"
+                        value={descricao}
+                        onChangeText={setDescricao}
+                        placeholder="Conte sobre o pet"
+                        multiline
+                        numberOfLines={4}
+                        maxLength={500}
+                        error={errors.descricao}
+                    />
+
+                    <View style={styles.group}>
+                        <Text style={styles.groupLabel}>Sexo</Text>
+                        <View style={styles.optionRow}>
+                            {[
+                                { label: 'Fêmea', value: 'FEMEA' },
+                                { label: 'Macho', value: 'MACHO' },
+                            ].map((item) => (
+                                <Pressable
+                                    key={item.value}
+                                    style={[styles.optionChip, sexo === item.value && styles.optionChipActive]}
+                                    onPress={() => setSexo(item.value)}
+                                >
+                                    <Text style={[styles.optionText, sexo === item.value && styles.optionTextActive]}>{item.label}</Text>
+                                </Pressable>
+                            ))}
+                        </View>
+                        {errors.sexo ? <Text style={styles.errorText}>{errors.sexo}</Text> : null}
+                    </View>
+
+                    <View style={styles.group}>
+                        <Text style={styles.groupLabel}>Cuidados</Text>
+                        <View style={styles.optionRow}>
+                            <Pressable
+                                style={[styles.optionChip, isCastrado && styles.optionChipActive]}
+                                onPress={() => setIsCastrado((prev) => !prev)}
+                            >
+                                <Text style={[styles.optionText, isCastrado && styles.optionTextActive]}>Castrado</Text>
+                            </Pressable>
+
+                            <Pressable
+                                style={[styles.optionChip, isVermifugo && styles.optionChipActive]}
+                                onPress={() => setIsVermifugo((prev) => !prev)}
+                            >
+                                <Text style={[styles.optionText, isVermifugo && styles.optionTextActive]}>Vermífugo</Text>
+                            </Pressable>
+
+                            <Pressable
+                                style={[styles.optionChip, isVacinado && styles.optionChipActive]}
+                                onPress={() => setIsVacinado((prev) => !prev)}
+                            >
+                                <Text style={[styles.optionText, isVacinado && styles.optionTextActive]}>Vacinado</Text>
+                            </Pressable>
+                        </View>
+                    </View>
+
+                    <View style={styles.group}>
+                        <Text style={styles.groupLabel}>Imagens do pet ({images.length}/{MAX_IMAGES})</Text>
+                        <Pressable style={styles.addImageButton} onPress={handleAddImages}>
+                            <Text style={styles.addImageButtonText}>Adicionar imagens</Text>
+                        </Pressable>
+
+                        {errors.images ? <Text style={styles.errorText}>{errors.images}</Text> : null}
+
+                        <View style={styles.imagesGrid}>
+                            {images.map((item, index) => (
+                                <View key={`${item.uri}-${index}`} style={styles.imageItem}>
+                                    <Image source={{ uri: item.uri }} style={styles.imagePreview} />
+                                    <Pressable
+                                        style={styles.removeImageButton}
+                                        onPress={() => handleRemoveImage(index)}
+                                    >
+                                        <Text style={styles.removeImageText}>X</Text>
+                                    </Pressable>
+                                </View>
+                            ))}
+                        </View>
+                    </View>
+
+                    {errors.ongId ? <Text style={styles.errorText}>{errors.ongId}</Text> : null}
+
+                    <DynamicButton variant="primary" onPress={handleSave} isLoading={isSubmitting} disabled={isSubmitting}>
+                        {isEdit ? 'Salvar alterações' : 'Cadastrar pet'}
+                    </DynamicButton>
                 </View>
 
-                {errors.ongId ? <Text style={styles.errorText}>{errors.ongId}</Text> : null}
-
-                <DynamicButton variant="primary" onPress={handleSave} isLoading={isSubmitting} disabled={isSubmitting}>
-                    {isEdit ? 'Salvar alterações' : 'Cadastrar pet'}
-                </DynamicButton>
-            </View>
-
-            <Toast
-                visible={toast.visible}
-                title={toast.title}
-                message={toast.message}
-                type={toast.type}
-            />
-        </ScrollView>
+                <Toast
+                    visible={toast.visible}
+                    title={toast.title}
+                    message={toast.message}
+                    type={toast.type}
+                />
+            </ScrollView>
+        </SwipeBackGesture>
     );
 }
 

@@ -17,7 +17,7 @@ export default function PetSearchInput({
             pathname: '/ong/petForm',
             params: {
                 mode: 'add',
-                from: pathname,
+                backTo: pathname,
             },
         });
     };
