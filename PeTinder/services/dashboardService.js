@@ -134,6 +134,8 @@ export const useDashboardData = () => {
             setLoading(true);
             setError(null);
 
+            let results;
+
             if (useBackend) {
                 const session = await getSession();
                 const ongId = String(session?.ongId ?? '').trim();
@@ -142,24 +144,34 @@ export const useDashboardData = () => {
                     throw new Error('ONG nao encontrada na sessao');
                 }
 
-                const [ranking, stats, pending] = await Promise.all([
+                results = await Promise.allSettled([
                     fetchDashboardRankingFromApi(ongId),
                     fetchDashboardStatsFromApi(ongId),
                     fetchDashboardPendingFromApi(ongId),
                 ]);
-
-                setPets(ranking);
-                setAdoptedCount(stats.adoptedCount);
-                setNotAdoptedCount(stats.notAdoptedCount);
-                setPendingPets(pending);
-                return;
+            } else {
+                results = await Promise.allSettled([
+                    fetchDashboardRankingFromMock(),
+                    fetchDashboardStatsFromMock(),
+                    fetchDashboardPendingFromMock(),
+                ]);
             }
 
-            const [ranking, stats, pending] = await Promise.all([
-                fetchDashboardRankingFromMock(),
-                fetchDashboardStatsFromMock(),
-                fetchDashboardPendingFromMock(),
-            ]);
+            const ranking = results[0].status === 'fulfilled' ? results[0].value : [];
+            const stats = results[1].status === 'fulfilled' ? results[1].value : { adoptedCount: 0, notAdoptedCount: 0 };
+            const pending = results[2].status === 'fulfilled' ? results[2].value : [];
+
+            results.forEach((r, i) => {
+                if (r.status === 'rejected') {
+                    console.warn(`Dashboard fetch [${i}] failed:`, r.reason);
+                }
+            });
+
+            const allFailed = results.every(r => r.status === 'rejected');
+
+            if (allFailed) {
+                setError('Erro ao carregar dashboard');
+            }
 
             setPets(ranking);
             setAdoptedCount(stats.adoptedCount);

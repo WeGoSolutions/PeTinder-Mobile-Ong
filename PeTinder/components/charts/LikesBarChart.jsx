@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { colors, typography, scaleWidth, scaleHeight, scaleFont, layout } from '../../constants/theme';
 
 /**
@@ -7,7 +8,7 @@ import { colors, typography, scaleWidth, scaleHeight, scaleFont, layout } from '
  * 
  * @param {Array} pets - Array of pet objects with { id, name, likes }
  * @param {number} maxVisibleBars - Maximum bars visible at once (default: 6)
- * @param {boolean} homeChart - Maximum bars visible at once (default: 6)
+ * @param {boolean} homeChart - When true, hides the internal title (used in Home screen)
  */
 export default function LikesBarChart({
   pets = [],
@@ -112,45 +113,54 @@ export default function LikesBarChart({
         <Text style={styles.title}>Pets mais curtidos</Text>
       )}
 
-      <View style={styles.chartContainer}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={[
-            styles.barsContainer,
-            { minWidth: visibleWidth }
-          ]}
-          style={styles.scrollView}
-          onLayout={(event) => setViewportWidth(event.nativeEvent.layout.width)}
-          onContentSizeChange={(width) => setContentWidth(width)}
-          onScroll={Animated.event(
-            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-            { useNativeDriver: false }
-          )}
-          scrollEventThrottle={16}
-        >
-          {sortedPets.map((pet) => renderBar(pet))}
-        </ScrollView>
-
-        {/* Scroll indicator */}
-        {canScroll && (
-          <View
-            style={styles.scrollIndicatorContainer}
-            onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
+      {sortedPets.length === 0 || sortedPets.every(p => p.likes === 0) ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="heart-dislike-outline" size={32} color={colors.mauve} />
+          <Text style={styles.emptyText}>
+            Infelizmente, nenhum pet recebeu uma curtida
+          </Text>
+        </View>
+      ) : (
+        <View style={styles.chartContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[
+              styles.barsContainer,
+              { minWidth: visibleWidth }
+            ]}
+            style={styles.scrollView}
+            onLayout={(event) => setViewportWidth(event.nativeEvent.layout.width)}
+            onContentSizeChange={(width) => setContentWidth(width)}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+              { useNativeDriver: false }
+            )}
+            scrollEventThrottle={16}
           >
-            <View style={styles.scrollIndicatorTrack} />
-            <Animated.View
-              style={[
-                styles.scrollIndicatorThumb,
-                {
-                  width: thumbWidth,
-                  transform: [{ translateX }],
-                },
-              ]}
-            />
-          </View>
-        )}
-      </View>
+            {sortedPets.map((pet) => renderBar(pet))}
+          </ScrollView>
+
+          {/* Scroll indicator */}
+          {canScroll && (
+            <View
+              style={styles.scrollIndicatorContainer}
+              onLayout={(event) => setTrackWidth(event.nativeEvent.layout.width)}
+            >
+              <View style={styles.scrollIndicatorTrack} />
+              <Animated.View
+                style={[
+                  styles.scrollIndicatorThumb,
+                  {
+                    width: thumbWidth,
+                    transform: [{ translateX }],
+                  },
+                ]}
+              />
+            </View>
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -229,5 +239,18 @@ const styles = StyleSheet.create({
     height: scaleHeight(6),
     borderRadius: scaleHeight(3),
     backgroundColor: colors.mauve,
+  },
+  emptyContainer: {
+    borderRadius: scaleWidth(10),
+    backgroundColor: '#EEE6EA',
+    paddingHorizontal: scaleWidth(16),
+    paddingVertical: scaleHeight(18),
+    alignItems: 'center',
+    gap: scaleHeight(8),
+  },
+  emptyText: {
+    color: colors.black,
+    fontSize: scaleFont(16),
+    textAlign: 'center',
   },
 });

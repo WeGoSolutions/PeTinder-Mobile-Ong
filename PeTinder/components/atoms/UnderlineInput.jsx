@@ -25,6 +25,7 @@ const HIT_SLOP = {
  * @property {(text: string) => void} [onChangeText]
  * @property {boolean} [masked]
  * @property {boolean} [isLink]
+ * @property {boolean} [secureTextEntry]
  * @property {string} [error]
  */
 
@@ -38,8 +39,9 @@ export default function UnderlineInput({
   onChangeText,
   masked = false,
   isLink = false,
+  secureTextEntry = false,
   error,
-}) {
+}){
   const displayValue = typeof value === 'string' ? value : '';
   const [toast, setToast] = useState({ visible: false, title: '', message: '', type: 'info' });
   const toastTimeoutRef = useRef(null);
@@ -92,6 +94,7 @@ export default function UnderlineInput({
           style={styles.input}
           value={displayValue}
           onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry}
           placeholderTextColor={Colors.textSecondary}
         />
       ) : showLink ? (

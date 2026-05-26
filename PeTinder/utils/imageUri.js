@@ -7,6 +7,30 @@ export const sanitizeBaseUrl = (value) => {
 
 const isAbsoluteUri = (value) => /^[a-z][a-z0-9+.-]*:/.test(value);
 
+const isLocalhostOrigin = (origin) => /(?:^|\/\/)localhost(?::|\/|$)|(?:^|\/\/)127\.0\.0\.1(?::|\/|$)/i.test(origin);
+
+const normalizeLocalhostUri = (absoluteUrl, baseOrigin) => {
+  if (!baseOrigin) {
+    return absoluteUrl;
+  }
+
+  try {
+    const parsed = new URL(absoluteUrl);
+    if (isLocalhostOrigin(parsed.host)) {
+      const normalizedBase = sanitizeBaseUrl(baseOrigin);
+      return `${normalizedBase}${parsed.pathname}${parsed.search}${parsed.hash}`;
+    }
+  } catch (error) {
+    const match = absoluteUrl.match(/^(https?:\/\/[^/]+)(.*)/i);
+    if (match && isLocalhostOrigin(match[1])) {
+      const normalizedBase = sanitizeBaseUrl(baseOrigin);
+      return `${normalizedBase}${match[2]}`;
+    }
+  }
+
+  return absoluteUrl;
+};
+
 export const getApiBaseUrl = () => {
   const env = process.env;
   const useBackend = String(env.EXPO_PUBLIC_UTILIZAR_BACKEND ?? '').toLowerCase() === 'true';
@@ -40,7 +64,7 @@ export const resolveImageUri = (value, baseOrigin = getApiOrigin()) => {
   }
 
   if (isAbsoluteUri(raw)) {
-    return raw;
+    return normalizeLocalhostUri(raw, baseOrigin);
   }
 
   if (!baseOrigin) {

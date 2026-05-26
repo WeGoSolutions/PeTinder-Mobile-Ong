@@ -218,10 +218,26 @@ export const normalizeBackendError = (error) => {
   return 'Nao foi possivel salvar as informacoes. Tente novamente.';
 };
 
+export const changeOngPassword = async (ongId, senhaAtual, novaSenha) => {
+  const normalizedOngId = trimOrEmpty(String(ongId ?? ''));
+
+  if (!normalizedOngId) {
+    throw new Error('ONG nao encontrada na sessao.');
+  }
+
+  if (!useBackend) {
+    return { success: true };
+  }
+
+  const response = await api.patch(`/ongs/${normalizedOngId}/senha`, { senhaAtual, novaSenha });
+  return response?.data;
+};
+
 export default {
   getOngProfile,
   getOngImage,
   updateOngImage,
   updateOngProfile,
+  changeOngPassword,
   normalizeBackendError,
 };
