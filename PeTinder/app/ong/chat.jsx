@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
     KeyboardAvoidingView,
     Platform,
@@ -11,10 +11,9 @@ import {
     FlatList,
     Image,
     Modal,
-    Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import { Audio } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
@@ -29,6 +28,8 @@ import {
     subscribeToMessages,
 } from '../../services/chatFirebase';
 import { hasRequiredFirebaseConfig } from '../../services/firebase';
+import Toast from '../../components/Toast';
+import SwipeBackGesture from '../../components/SwipeBackGesture';
 
 const formatTime = (timestamp) => {
     if (!timestamp) {
@@ -81,9 +82,16 @@ const getAudioMimeTypeByUri = (uri) => {
     return 'audio/mp4';
 };
 
+const getStringParam = (value) => {
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value) && typeof value[0] === 'string') return value[0];
+    return '';
+};
+
 export default function Chat() {
     const insets = useSafeAreaInsets();
-    const { userId: targetUserId, userName: targetUserName } = useLocalSearchParams();
+    const router = useRouter();
+    const { userId: targetUserId, userName: targetUserName, backTo } = useLocalSearchParams();
     const [messages, setMessages] = useState([]);
     const [messageText, setMessageText] = useState('');
     const [isSending, setIsSending] = useState(false);
@@ -95,6 +103,7 @@ export default function Chat() {
     const [pendingImageDataUrl, setPendingImageDataUrl] = useState('');
     const [pendingImageDescription, setPendingImageDescription] = useState('');
     const [isPendingImageVisible, setIsPendingImageVisible] = useState(false);
+    const [isImageSourceModalVisible, setIsImageSourceModalVisible] = useState(false);
     const [isSendingImage, setIsSendingImage] = useState(false);
     const [isSendingAudio, setIsSendingAudio] = useState(false);
     const [isRecordingAudio, setIsRecordingAudio] = useState(false);
@@ -102,10 +111,12 @@ export default function Chat() {
     const [playingAudioMessageId, setPlayingAudioMessageId] = useState('');
     const [focusedImageUri, setFocusedImageUri] = useState('');
     const [isDownloadingImage, setIsDownloadingImage] = useState(false);
+    const [toast, setToast] = useState({ visible: false, title: '', message: '', type: 'info' });
     const listRef = useRef(null);
     const recordingRef = useRef(null);
     const recordingTimerRef = useRef(null);
     const soundRef = useRef(null);
+    const toastTimeoutRef = useRef(null);
     const isRecordPressActiveRef = useRef(false);
     const isRecordStartInProgressRef = useRef(false);
 
@@ -115,6 +126,35 @@ export default function Chat() {
         ...msg,
         isMine: String(msg.senderId || '') === String(currentOngId || ''),
     }));
+
+    const showToast = (title, message, type = 'info', duration = 2400) => {
+        if (toastTimeoutRef.current) {
+            clearTimeout(toastTimeoutRef.current);
+        }
+
+        setToast({ visible: true, title, message, type });
+
+        toastTimeoutRef.current = setTimeout(() => {
+            setToast((prev) => ({ ...prev, visible: false }));
+            toastTimeoutRef.current = null;
+        }, duration);
+    };
+
+    const handleGestureBack = useCallback(() => {
+        const backToPath = getStringParam(backTo).trim();
+
+        if (backToPath.length > 0) {
+            router.replace(backToPath);
+            return;
+        }
+
+        if (typeof router.canGoBack === 'function' && router.canGoBack()) {
+            router.back();
+            return;
+        }
+
+        router.replace('/ong/interessados');
+    }, [backTo, router]);
 
     useEffect(() => {
         const loadSession = async () => {
@@ -136,10 +176,10 @@ export default function Chat() {
 
     useEffect(() => {
         if (!hasRequiredFirebaseConfig || !chatId) {
-            return () => {};
+            return () => { };
         }
 
-        markChatAsRead(chatId, currentOngId).catch(() => {});
+        markChatAsRead(chatId, currentOngId).catch(() => { });
 
         const unsubscribe = subscribeToMessages(
             chatId,
@@ -148,7 +188,7 @@ export default function Chat() {
                 setTimeout(() => {
                     listRef.current?.scrollToEnd({ animated: false });
                 }, 50);
-                markChatAsRead(chatId, currentOngId).catch(() => {});
+                markChatAsRead(chatId, currentOngId).catch(() => { });
             },
             (err) => {
                 setError(err?.message || 'Erro ao carregar mensagens');
@@ -167,13 +207,17 @@ export default function Chat() {
         }
 
         if (recordingRef.current) {
-            recordingRef.current.stopAndUnloadAsync().catch(() => {});
+            recordingRef.current.stopAndUnloadAsync().catch(() => { });
             recordingRef.current = null;
         }
 
         if (soundRef.current) {
-            soundRef.current.unloadAsync().catch(() => {});
+            soundRef.current.unloadAsync().catch(() => { });
             soundRef.current = null;
+        }
+
+        if (toastTimeoutRef.current) {
+            clearTimeout(toastTimeoutRef.current);
         }
     }, []);
 
@@ -262,20 +306,12 @@ export default function Chat() {
             return;
         }
 
-        Alert.alert('Enviar imagem', 'Escolha uma opção', [
-            {
-                text: 'Câmera',
-                onPress: () => handlePickImage('camera'),
-            },
-            {
-                text: 'Galeria',
-                onPress: () => handlePickImage('gallery'),
-            },
-            {
-                text: 'Cancelar',
-                style: 'cancel',
-            },
-        ]);
+        setIsImageSourceModalVisible(true);
+    };
+
+    const handlePickImageFromSource = async (source) => {
+        setIsImageSourceModalVisible(false);
+        await handlePickImage(source);
     };
 
     const handleSendImage = async () => {
@@ -428,7 +464,7 @@ export default function Chat() {
             Audio.setAudioModeAsync({
                 allowsRecordingIOS: false,
                 playsInSilentModeIOS: true,
-            }).catch(() => {});
+            }).catch(() => { });
         }
     };
 
@@ -466,7 +502,7 @@ export default function Chat() {
                 (status) => {
                     if (status.didJustFinish) {
                         setPlayingAudioMessageId('');
-                        soundRef.current?.unloadAsync().catch(() => {});
+                        soundRef.current?.unloadAsync().catch(() => { });
                         soundRef.current = null;
                     }
                 }
@@ -493,7 +529,7 @@ export default function Chat() {
             const permission = await MediaLibrary.requestPermissionsAsync();
 
             if (!permission?.granted) {
-                Alert.alert('Permissão necessária', 'Autorize acesso à galeria para baixar a imagem.');
+                showToast('Permissão necessária', 'Autorize acesso à galeria para baixar a imagem.', 'warning');
                 return;
             }
 
@@ -544,7 +580,7 @@ export default function Chat() {
                 await MediaLibrary.addAssetsToAlbumAsync([createdAsset], existingAlbum, false);
             }
 
-            Alert.alert('Download concluído', `Imagem salva no álbum ${albumName}.`);
+            showToast('Download concluído', `Imagem salva no álbum ${albumName}.`, 'success');
         } catch (err) {
             setError(err?.message || 'Não foi possível baixar a imagem.');
         } finally {
@@ -579,231 +615,276 @@ export default function Chat() {
                     headerBackVisible: true,
                 }}
             />
-            <KeyboardAvoidingView
-                style={styles.container}
-                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 50 : 0}
-            >
-                {Boolean(error) && <Text style={styles.errorBanner}>{error}</Text>}
+            <SwipeBackGesture onSwipeBack={handleGestureBack}>
+                <KeyboardAvoidingView
+                    style={styles.container}
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                    keyboardVerticalOffset={Platform.OS === 'ios' ? insets.top + 50 : insets.top + 60}
+                    enabled={true}
+                >
+                    {Boolean(error) && <Text style={styles.errorBanner}>{error}</Text>}
 
-                <FlatList
-                    ref={listRef}
-                    data={displayedMessages}
-                    style={styles.messagesList}
-                    contentContainerStyle={styles.messagesListContent}
-                    keyExtractor={(item) => item.id}
-                    onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
-                    renderItem={({ item }) => (
-                        <View
-                            style={[
-                                styles.messageBubble,
-                                item.isMine ? styles.myMessage : styles.theirMessage,
+                    <FlatList
+                        ref={listRef}
+                        data={displayedMessages}
+                        style={styles.messagesList}
+                        contentContainerStyle={styles.messagesListContent}
+                        keyExtractor={(item) => item.id}
+                        onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: true })}
+                        renderItem={({ item }) => (
+                            <View
+                                style={[
+                                    styles.messageBubble,
+                                    item.isMine ? styles.myMessage : styles.theirMessage,
+                                ]}
+                            >
+                                {!item.isMine && (
+                                    <Text style={styles.senderName}>{item.senderName || 'Usuário'}</Text>
+                                )}
+                                {Boolean(item?.imageUrl) && (
+                                    <Pressable onPress={() => setFocusedImageUri(String(item.imageUrl || ''))}>
+                                        <Image
+                                            source={{ uri: item.imageUrl }}
+                                            style={styles.messageImage}
+                                            resizeMode="cover"
+                                        />
+                                    </Pressable>
+                                )}
+                                {Boolean(item?.text) && (
+                                    <Text style={styles.messageText}>{item.text}</Text>
+                                )}
+                                {Boolean(item?.audioUrl) && (
+                                    <Pressable
+                                        onPress={() => handlePlayAudio(item)}
+                                        style={styles.audioMessageButton}
+                                    >
+                                        <MaterialIcons
+                                            name={playingAudioMessageId === item.id ? 'stop-circle' : 'play-circle-filled'}
+                                            size={24}
+                                            color="#FFFFFF"
+                                        />
+                                        <Text style={styles.audioMessageText}>
+                                            {playingAudioMessageId === item.id ? 'Parar áudio' : 'Ouvir áudio'}
+                                        </Text>
+                                        <Text style={styles.audioMessageDurationText}>
+                                            {formatAudioDuration(item?.audioDurationMs)}
+                                        </Text>
+                                    </Pressable>
+                                )}
+                                <Text style={styles.messageTime}>{formatTime(item.createdAt)}</Text>
+                            </View>
+                        )}
+                        ListEmptyComponent={
+                            <View style={styles.emptyContainer}>
+                                <Text style={styles.emptyText}>Nenhuma mensagem ainda</Text>
+                            </View>
+                        }
+                    />
+
+                    <View style={[styles.inputContainer, { paddingBottom: insets.bottom || 8 }]}>
+                        <Pressable
+                            style={({ pressed }) => [
+                                styles.attachButton,
+                                (isSendingImage || isSendingAudio) && styles.buttonDisabled,
+                                pressed && styles.buttonPressed,
                             ]}
+                            onPress={handleOpenImageOptions}
+                            disabled={isSendingImage || isSendingAudio}
                         >
-                            {!item.isMine && (
-                                <Text style={styles.senderName}>{item.senderName || 'Usuário'}</Text>
+                            <MaterialIcons name="image" size={20} color="#fff" />
+                        </Pressable>
+
+                        <Pressable
+                            style={({ pressed }) => [
+                                styles.attachButton,
+                                isRecordingAudio && styles.recordButtonActive,
+                                (isSendingAudio || isSending || isSendingImage) && styles.buttonDisabled,
+                                pressed && styles.buttonPressed,
+                            ]}
+                            onPressIn={handleRecordPressIn}
+                            onPressOut={handleRecordPressOut}
+                            disabled={isSendingAudio || isSending || isSendingImage}
+                        >
+                            <MaterialIcons name={isRecordingAudio ? 'graphic-eq' : 'mic'} size={20} color="#fff" />
+                        </Pressable>
+
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Digite uma mensagem..."
+                            placeholderTextColor="#999"
+                            value={messageText}
+                            onChangeText={setMessageText}
+                            editable={!isSending && !isSendingImage && !isSendingAudio}
+                            multiline
+                            maxLength={500}
+                        />
+                        <Pressable
+                            style={({ pressed }) => [
+                                styles.sendButton,
+                                (isSending || isSendingImage || isSendingAudio) && styles.buttonDisabled,
+                                pressed && styles.buttonPressed,
+                            ]}
+                            onPress={handleSendText}
+                            disabled={isSending || isSendingImage || isSendingAudio}
+                        >
+                            {isSending ? (
+                                <ActivityIndicator size="small" color="#fff" />
+                            ) : (
+                                <MaterialIcons name="send" size={18} color="#fff" />
                             )}
-                            {Boolean(item?.imageUrl) && (
-                                <Pressable onPress={() => setFocusedImageUri(String(item.imageUrl || ''))}>
-                                    <Image
-                                        source={{ uri: item.imageUrl }}
-                                        style={styles.messageImage}
-                                        resizeMode="cover"
-                                    />
-                                </Pressable>
-                            )}
-                            {Boolean(item?.text) && (
-                                <Text style={styles.messageText}>{item.text}</Text>
-                            )}
-                            {Boolean(item?.audioUrl) && (
-                                <Pressable
-                                    onPress={() => handlePlayAudio(item)}
-                                    style={styles.audioMessageButton}
-                                >
-                                    <MaterialIcons
-                                        name={playingAudioMessageId === item.id ? 'stop-circle' : 'play-circle-filled'}
-                                        size={24}
-                                        color="#FFFFFF"
-                                    />
-                                    <Text style={styles.audioMessageText}>
-                                        {playingAudioMessageId === item.id ? 'Parar áudio' : 'Ouvir áudio'}
-                                    </Text>
-                                    <Text style={styles.audioMessageDurationText}>
-                                        {formatAudioDuration(item?.audioDurationMs)}
-                                    </Text>
-                                </Pressable>
-                            )}
-                            <Text style={styles.messageTime}>{formatTime(item.createdAt)}</Text>
+                        </Pressable>
+                    </View>
+
+                    {isRecordingAudio && (
+                        <View style={styles.recordingHintRow}>
+                            <View style={styles.recordingDot} />
+                            <Text style={styles.recordingHintText}>
+                                Gravando... solte para enviar {formatAudioDuration(recordingAudioDurationMs)}
+                            </Text>
                         </View>
                     )}
-                    ListEmptyComponent={
-                        <View style={styles.emptyContainer}>
-                            <Text style={styles.emptyText}>Nenhuma mensagem ainda</Text>
-                        </View>
-                    }
-                />
 
-                <View style={[styles.inputContainer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
-                    <Pressable
-                        style={({ pressed }) => [
-                            styles.attachButton,
-                            (isSendingImage || isSendingAudio) && styles.buttonDisabled,
-                            pressed && styles.buttonPressed,
-                        ]}
-                        onPress={handleOpenImageOptions}
-                        disabled={isSendingImage || isSendingAudio}
+                    <Modal
+                        visible={isPendingImageVisible}
+                        transparent
+                        animationType="fade"
+                        onRequestClose={() => !isSendingImage && resetImageComposeState()}
                     >
-                        <MaterialIcons name="image" size={20} color="#fff" />
-                    </Pressable>
+                        <View style={styles.modalOverlay}>
+                            <View style={styles.composeModalCard}>
+                                {(pendingImageUri || pendingImageDataUrl) && (
+                                    <Image
+                                        source={{ uri: pendingImageUri || pendingImageDataUrl }}
+                                        style={styles.previewImage}
+                                        resizeMode="cover"
+                                    />
+                                )}
 
-                    <Pressable
-                        style={({ pressed }) => [
-                            styles.attachButton,
-                            isRecordingAudio && styles.recordButtonActive,
-                            (isSendingAudio || isSending || isSendingImage) && styles.buttonDisabled,
-                            pressed && styles.buttonPressed,
-                        ]}
-                        onPressIn={handleRecordPressIn}
-                        onPressOut={handleRecordPressOut}
-                        disabled={isSendingAudio || isSending || isSendingImage}
-                    >
-                        <MaterialIcons name={isRecordingAudio ? 'graphic-eq' : 'mic'} size={20} color="#fff" />
-                    </Pressable>
-
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Digite uma mensagem..."
-                        placeholderTextColor="#999"
-                        value={messageText}
-                        onChangeText={setMessageText}
-                        editable={!isSending && !isSendingImage && !isSendingAudio}
-                        multiline
-                        maxLength={500}
-                    />
-                    <Pressable
-                        style={({ pressed }) => [
-                            styles.sendButton,
-                            (isSending || isSendingImage || isSendingAudio) && styles.buttonDisabled,
-                            pressed && styles.buttonPressed,
-                        ]}
-                        onPress={handleSendText}
-                        disabled={isSending || isSendingImage || isSendingAudio}
-                    >
-                        {isSending ? (
-                            <ActivityIndicator size="small" color="#fff" />
-                        ) : (
-                            <MaterialIcons name="send" size={18} color="#fff" />
-                        )}
-                    </Pressable>
-                </View>
-
-                {isRecordingAudio && (
-                    <View style={styles.recordingHintRow}>
-                        <View style={styles.recordingDot} />
-                        <Text style={styles.recordingHintText}>
-                            Gravando... solte para enviar {formatAudioDuration(recordingAudioDurationMs)}
-                        </Text>
-                    </View>
-                )}
-
-                <Modal
-                    visible={isPendingImageVisible}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={() => !isSendingImage && resetImageComposeState()}
-                >
-                    <View style={styles.modalOverlay}>
-                        <View style={styles.composeModalCard}>
-                            {(pendingImageUri || pendingImageDataUrl) && (
-                                <Image
-                                    source={{ uri: pendingImageUri || pendingImageDataUrl }}
-                                    style={styles.previewImage}
-                                    resizeMode="cover"
+                                <TextInput
+                                    value={pendingImageDescription}
+                                    onChangeText={setPendingImageDescription}
+                                    placeholder="Adicione uma descrição..."
+                                    placeholderTextColor="#9A9A9A"
+                                    style={styles.composeInput}
+                                    editable={!isSendingImage}
+                                    maxLength={280}
                                 />
-                            )}
 
-                            <TextInput
-                                value={pendingImageDescription}
-                                onChangeText={setPendingImageDescription}
-                                placeholder="Adicione uma descrição..."
-                                placeholderTextColor="#9A9A9A"
-                                style={styles.composeInput}
-                                editable={!isSendingImage}
-                                maxLength={280}
+                                <View style={styles.modalActions}>
+                                    <Pressable
+                                        style={({ pressed }) => [
+                                            styles.modalButton,
+                                            styles.cancelButton,
+                                            pressed && styles.buttonPressed,
+                                        ]}
+                                        onPress={() => !isSendingImage && resetImageComposeState()}
+                                        disabled={isSendingImage}
+                                    >
+                                        <Text style={styles.modalButtonText}>Cancelar</Text>
+                                    </Pressable>
+
+                                    <Pressable
+                                        style={({ pressed }) => [
+                                            styles.modalButton,
+                                            styles.sendImageButton,
+                                            (isSendingImage || !pendingImageDataUrl) && styles.buttonDisabled,
+                                            pressed && styles.buttonPressed,
+                                        ]}
+                                        onPress={handleSendImage}
+                                        disabled={isSendingImage || !pendingImageDataUrl}
+                                    >
+                                        {isSendingImage ? (
+                                            <ActivityIndicator size="small" color="#fff" />
+                                        ) : (
+                                            <Text style={styles.modalButtonText}>Enviar</Text>
+                                        )}
+                                    </Pressable>
+                                </View>
+                            </View>
+                        </View>
+                    </Modal>
+
+                    <Modal
+                        visible={isImageSourceModalVisible}
+                        transparent
+                        animationType="fade"
+                        onRequestClose={() => setIsImageSourceModalVisible(false)}
+                    >
+                        <View style={styles.optionModalOverlay}>
+                            <Pressable
+                                style={styles.optionModalBackdrop}
+                                onPress={() => setIsImageSourceModalVisible(false)}
                             />
 
-                            <View style={styles.modalActions}>
+                            <View style={styles.optionModalCard}>
+                                <Text style={styles.optionModalTitle}>Enviar imagem</Text>
+                                <Text style={styles.optionModalSubtitle}>Escolha uma opção</Text>
+
                                 <Pressable
-                                    style={({ pressed }) => [
-                                        styles.modalButton,
-                                        styles.cancelButton,
-                                        pressed && styles.buttonPressed,
-                                    ]}
-                                    onPress={() => !isSendingImage && resetImageComposeState()}
-                                    disabled={isSendingImage}
+                                    style={({ pressed }) => [styles.optionButton, pressed && styles.buttonPressed]}
+                                    onPress={() => handlePickImageFromSource('camera')}
                                 >
-                                    <Text style={styles.modalButtonText}>Cancelar</Text>
+                                    <Text style={styles.optionButtonText}>Câmera</Text>
                                 </Pressable>
 
                                 <Pressable
-                                    style={({ pressed }) => [
-                                        styles.modalButton,
-                                        styles.sendImageButton,
-                                        (isSendingImage || !pendingImageDataUrl) && styles.buttonDisabled,
-                                        pressed && styles.buttonPressed,
-                                    ]}
-                                    onPress={handleSendImage}
-                                    disabled={isSendingImage || !pendingImageDataUrl}
+                                    style={({ pressed }) => [styles.optionButton, pressed && styles.buttonPressed]}
+                                    onPress={() => handlePickImageFromSource('gallery')}
                                 >
-                                    {isSendingImage ? (
-                                        <ActivityIndicator size="small" color="#fff" />
-                                    ) : (
-                                        <Text style={styles.modalButtonText}>Enviar</Text>
-                                    )}
+                                    <Text style={styles.optionButtonText}>Galeria</Text>
+                                </Pressable>
+
+                                <Pressable
+                                    style={({ pressed }) => [styles.optionButton, styles.optionCancelButton, pressed && styles.buttonPressed]}
+                                    onPress={() => setIsImageSourceModalVisible(false)}
+                                >
+                                    <Text style={styles.optionButtonText}>Cancelar</Text>
                                 </Pressable>
                             </View>
                         </View>
-                    </View>
-                </Modal>
+                    </Modal>
 
-                <Modal
-                    visible={Boolean(focusedImageUri)}
-                    transparent
-                    animationType="fade"
-                    onRequestClose={() => setFocusedImageUri('')}
-                >
-                    <View style={styles.focusModalRoot}>
-                        <Pressable style={styles.focusModalBackdrop} onPress={() => setFocusedImageUri('')} />
+                    <Modal
+                        visible={Boolean(focusedImageUri)}
+                        transparent
+                        animationType="fade"
+                        onRequestClose={() => setFocusedImageUri('')}
+                    >
+                        <View style={styles.focusModalRoot}>
+                            <Pressable style={styles.focusModalBackdrop} onPress={() => setFocusedImageUri('')} />
 
-                        <View style={styles.focusImageContainer}>
-                            <Image
-                                source={{ uri: focusedImageUri }}
-                                style={styles.focusImage}
-                                resizeMode="contain"
-                            />
+                            <View style={styles.focusImageContainer}>
+                                <Image
+                                    source={{ uri: focusedImageUri }}
+                                    style={styles.focusImage}
+                                    resizeMode="contain"
+                                />
+                            </View>
+
+                            <Pressable
+                                style={[styles.focusActionButton, styles.focusDownloadButton]}
+                                onPress={handleDownloadFocusedImage}
+                                disabled={isDownloadingImage}
+                            >
+                                {isDownloadingImage ? (
+                                    <ActivityIndicator size="small" color="#FFFFFF" />
+                                ) : (
+                                    <MaterialIcons name="download" size={22} color="#FFFFFF" />
+                                )}
+                            </Pressable>
+
+                            <Pressable
+                                style={[styles.focusActionButton, styles.focusCloseButton]}
+                                onPress={() => setFocusedImageUri('')}
+                            >
+                                <MaterialIcons name="close" size={22} color="#FFFFFF" />
+                            </Pressable>
                         </View>
+                    </Modal>
 
-                        <Pressable
-                            style={[styles.focusActionButton, styles.focusDownloadButton]}
-                            onPress={handleDownloadFocusedImage}
-                            disabled={isDownloadingImage}
-                        >
-                            {isDownloadingImage ? (
-                                <ActivityIndicator size="small" color="#FFFFFF" />
-                            ) : (
-                                <MaterialIcons name="download" size={22} color="#FFFFFF" />
-                            )}
-                        </Pressable>
-
-                        <Pressable
-                            style={[styles.focusActionButton, styles.focusCloseButton]}
-                            onPress={() => setFocusedImageUri('')}
-                        >
-                            <MaterialIcons name="close" size={22} color="#FFFFFF" />
-                        </Pressable>
-                    </View>
-                </Modal>
-            </KeyboardAvoidingView>
+                    <Toast visible={toast.visible} title={toast.title} message={toast.message} type={toast.type} />
+                </KeyboardAvoidingView>
+            </SwipeBackGesture>
         </>
     );
 }
@@ -880,9 +961,9 @@ const styles = StyleSheet.create({
     },
     inputContainer: {
         flexDirection: 'row',
-        alignItems: 'flex-end',
+        alignItems: 'center',
         paddingHorizontal: 12,
-        paddingTop: 12,
+        paddingTop: 8,
         borderTopWidth: 1,
         borderTopColor: colors.roseSurface,
         gap: 8,
@@ -902,7 +983,11 @@ const styles = StyleSheet.create({
         borderColor: colors.roseBorder,
         borderRadius: 12,
         paddingHorizontal: 12,
-        paddingVertical: 10,
+        paddingVertical: 6,
+        minHeight: 40,
+        maxHeight: 80,
+        alignSelf: 'center',
+        textAlignVertical: 'center',
         fontSize: 14,
         maxHeight: 100,
         color: colors.textStrong,
@@ -1017,6 +1102,50 @@ const styles = StyleSheet.create({
         color: '#fff',
         fontWeight: '600',
         fontSize: 14,
+    },
+    optionModalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 16,
+    },
+    optionModalBackdrop: {
+        ...StyleSheet.absoluteFillObject,
+        backgroundColor: 'rgba(0,0,0,0.45)',
+    },
+    optionModalCard: {
+        width: '90%',
+        maxWidth: 360,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 14,
+        padding: 16,
+        gap: 10,
+    },
+    optionModalTitle: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: colors.textStrong,
+        textAlign: 'center',
+    },
+    optionModalSubtitle: {
+        fontSize: 13,
+        color: '#666666',
+        textAlign: 'center',
+        marginBottom: 4,
+    },
+    optionButton: {
+        borderRadius: 10,
+        paddingVertical: 11,
+        alignItems: 'center',
+        backgroundColor: colors.mauve,
+    },
+    optionCancelButton: {
+        backgroundColor: '#8D8D8D',
+    },
+    optionButtonText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '600',
     },
     focusModalRoot: {
         flex: 1,

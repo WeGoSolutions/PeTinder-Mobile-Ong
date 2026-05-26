@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { Alert, Platform, StyleSheet, View } from 'react-native';
+import React from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Colors, Sizes, Spacing } from '../../theme';
 import PillButton from '../atoms/PillButton';
 
@@ -15,28 +15,6 @@ import PillButton from '../atoms/PillButton';
  * @param {FooterActionsProps} props
  */
 export default function FooterActions({ mode, onLogout, onCancel, onSave }) {
-  const confirmLogout = useCallback(() => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.confirm) {
-      const shouldLogout = window.confirm('Deseja realmente encerrar sua sessao?');
-      if (shouldLogout) {
-        onLogout();
-      }
-      return;
-    }
-
-    Alert.alert('Sair da conta', 'Deseja realmente encerrar sua sessao?', [
-      {
-        text: 'Cancelar',
-        style: 'cancel',
-      },
-      {
-        text: 'Sair',
-        style: 'destructive',
-        onPress: onLogout,
-      },
-    ]);
-  }, [onLogout]);
-
   return (
     <View style={styles.container}>
       {mode === 'view' ? (
@@ -44,7 +22,7 @@ export default function FooterActions({ mode, onLogout, onCancel, onSave }) {
           label="Sair da conta"
           variant="destructive"
           fullWidth
-          onPress={confirmLogout}
+          onPress={onLogout}
         />
       ) : (
         <View style={styles.editRow}>

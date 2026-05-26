@@ -4,14 +4,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import LogoHome from '../components/LogoHome';
 import DynamicInput from '../components/DynamicInput';
 import DynamicButton from '../components/DynamicButton';
+import Toast from '../components/Toast';
 import { useRouter } from 'expo-router'
 import { login } from '../services/loginService';
 import { getSession, saveSession } from '../services/sessionService';
@@ -23,6 +23,21 @@ export default function Home() {
   const [senha, setSenha] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
+  const [toast, setToast] = useState({ visible: false, title: '', message: '', type: 'info' });
+  const toastTimeoutRef = useRef(null);
+
+  const showToast = useCallback((title, message, type = 'info', duration = 2400) => {
+    if (toastTimeoutRef.current) {
+      clearTimeout(toastTimeoutRef.current);
+    }
+
+    setToast({ visible: true, title, message, type });
+
+    toastTimeoutRef.current = setTimeout(() => {
+      setToast((prev) => ({ ...prev, visible: false }));
+      toastTimeoutRef.current = null;
+    }, duration);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -52,14 +67,18 @@ export default function Home() {
     };
   }, [router]);
 
-  const showInvalidDataAlert = () => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined' && window.alert) {
-      window.alert('Dados inválidos');
-      return;
-    }
+  useEffect(
+    () => () => {
+      if (toastTimeoutRef.current) {
+        clearTimeout(toastTimeoutRef.current);
+      }
+    },
+    []
+  );
 
-    Alert.alert('Erro de login', 'Dados inválidos');
-  };
+  const showInvalidDataToast = useCallback(() => {
+    showToast('Erro de login', 'Dados inválidos.', 'error');
+  }, [showToast]);
 
   const handleLogin = async () => {
     if (isLoading || isBootstrapping) {
@@ -67,12 +86,7 @@ export default function Home() {
     }
 
     if (!email || !senha) {
-      if (Platform.OS === 'web' && typeof window !== 'undefined' && window.alert) {
-        window.alert('Campos obrigatórios', 'Preencha email e senha.');
-        return;
-      }
-
-      Alert.alert('Campos obrigatórios', 'Preencha email e senha.');
+      showToast('Campos obrigatórios', 'Preencha email e senha.', 'warning');
       return;
     }
 
@@ -96,7 +110,7 @@ export default function Home() {
 
       router.replace('/ong');
     } catch (error) {
-      showInvalidDataAlert();
+      showInvalidDataToast();
     } finally {
       setIsLoading(false);
     }
@@ -172,6 +186,8 @@ export default function Home() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Toast visible={toast.visible} title={toast.title} message={toast.message} type={toast.type} />
     </SafeAreaView>
   );
 }

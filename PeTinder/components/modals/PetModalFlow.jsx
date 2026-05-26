@@ -176,7 +176,7 @@ export default function PetModalFlow({ visible, pet, onClose, onRefresh }) {
             params: {
                 mode: 'edit',
                 petId: String(pet.petId),
-                from: '/ong/pets',
+                backTo: '/ong/pets',
                 nome: pet.petNome || '',
                 idade: pet.idade !== undefined && pet.idade !== null ? String(pet.idade) : '',
                 porte: pet.porte || '',
