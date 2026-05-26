@@ -11,6 +11,7 @@ import TwoColumnRow from './TwoColumnRow';
  * @property {string} [value]
  * @property {boolean} [masked]
  * @property {boolean} [isLink]
+ * @property {boolean} [secureTextEntry]
  * @property {(text: string) => void} [onChangeText]
  * @property {string} [error]
  * @property {import('./TwoColumnRow').FieldConfig} [leftField]
@@ -52,6 +53,7 @@ export default function FormSection({ fields, editable }) {
             value={field.value}
             masked={field.masked}
             isLink={field.isLink}
+            secureTextEntry={field.secureTextEntry}
             error={field.error}
             editable={editable && typeof field.onChangeText === 'function'}
             onChangeText={field.onChangeText}

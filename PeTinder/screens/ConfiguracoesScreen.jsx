@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Colors, Spacing } from '../theme';
+import { Colors, Layout, Spacing } from '../theme';
 import { getSession, saveSession } from '../services/sessionService';
 import { logout } from '../services/logoutService';
 import {
   getOngImage,
   getOngProfile,
+  changeOngPassword,
   normalizeBackendError,
   updateOngImage,
   updateOngProfile,
@@ -15,10 +16,12 @@ import {
 import { validateCEP, validateEmail, validateURL } from '../utils/validators';
 import { resolveImageUri } from '../utils/imageUri';
 import AppText from '../components/atoms/AppText';
+import PillButton from '../components/atoms/PillButton';
 import FooterActions from '../components/molecules/FooterActions';
 import FormSection from '../components/molecules/FormSection';
 import ProfileHero from '../components/molecules/ProfileHero';
 import TabBar from '../components/molecules/TabBar';
+import UnderlineInput from '../components/atoms/UnderlineInput';
 
 const MAIN_TABS = ['Conta', 'Configurações'];
 const SUB_TABS = ['Informações Pessoais', 'Endereço'];
@@ -90,6 +93,11 @@ export default function ConfiguracoesScreen() {
   const [savedImageUri, setSavedImageUri] = useState('');
   const [pendingImageDataUrl, setPendingImageDataUrl] = useState('');
   const [sessionState, setSessionState] = useState({ token: null, ongId: '', name: '' });
+  const [senhaAtual, setSenhaAtual] = useState('');
+  const [novaSenha, setNovaSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [passwordErrors, setPasswordErrors] = useState({});
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const updateField = useCallback((field, value) => {
     setFormData((prev) => {
@@ -329,6 +337,55 @@ export default function ConfiguracoesScreen() {
     setActiveSubTab(index);
   }, []);
 
+  const validatePasswordForm = useCallback(() => {
+    const nextErrors = {};
+
+    if (!senhaAtual.trim()) {
+      nextErrors.senhaAtual = 'Informe a senha atual.';
+    }
+
+    if (!novaSenha.trim()) {
+      nextErrors.novaSenha = 'Informe a nova senha.';
+    } else if (novaSenha.trim().length < 6) {
+      nextErrors.novaSenha = 'A nova senha deve ter no minimo 6 caracteres.';
+    }
+
+    if (!confirmarSenha.trim()) {
+      nextErrors.confirmarSenha = 'Confirme a nova senha.';
+    } else if (confirmarSenha !== novaSenha) {
+      nextErrors.confirmarSenha = 'As senhas nao conferem.';
+    }
+
+    setPasswordErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }, [senhaAtual, novaSenha, confirmarSenha]);
+
+  const handleChangePassword = useCallback(async () => {
+    if (isChangingPassword) {
+      return;
+    }
+
+    if (!validatePasswordForm()) {
+      return;
+    }
+
+    try {
+      setIsChangingPassword(true);
+      await changeOngPassword(sessionState.ongId, senhaAtual.trim(), novaSenha.trim());
+
+      setSenhaAtual('');
+      setNovaSenha('');
+      setConfirmarSenha('');
+      setPasswordErrors({});
+
+      Alert.alert('Sucesso', 'Senha alterada com sucesso.');
+    } catch (error) {
+      Alert.alert('Erro', normalizeBackendError(error));
+    } finally {
+      setIsChangingPassword(false);
+    }
+  }, [isChangingPassword, validatePasswordForm, sessionState.ongId, senhaAtual, novaSenha]);
+
   const personalFields = useMemo(
     () => [
       {
@@ -450,8 +507,56 @@ export default function ConfiguracoesScreen() {
           <FormSection fields={activeSubTab === 0 ? personalFields : addressFields} editable={isEditMode} />
         </View>
       ) : (
-        <View style={styles.placeholderContainer}>
-          <AppText variant="fieldValue">Em breve</AppText>
+        <View style={styles.contentWrapper}>
+          <ScrollView
+            style={styles.passwordScrollView}
+            contentContainerStyle={styles.passwordContent}
+            showsVerticalScrollIndicator={false}
+          >
+            <UnderlineInput
+              label="Senha atual"
+              value={senhaAtual}
+              editable
+              secureTextEntry
+              onChangeText={(text) => {
+                setSenhaAtual(text);
+                setPasswordErrors((prev) => ({ ...prev, senhaAtual: undefined }));
+              }}
+              error={passwordErrors.senhaAtual}
+            />
+            <UnderlineInput
+              label="Nova senha"
+              value={novaSenha}
+              editable
+              secureTextEntry
+              onChangeText={(text) => {
+                setNovaSenha(text);
+                setPasswordErrors((prev) => ({ ...prev, novaSenha: undefined }));
+              }}
+              error={passwordErrors.novaSenha}
+            />
+            <UnderlineInput
+              label="Confirmar nova senha"
+              value={confirmarSenha}
+              editable
+              secureTextEntry
+              onChangeText={(text) => {
+                setConfirmarSenha(text);
+                setPasswordErrors((prev) => ({ ...prev, confirmarSenha: undefined }));
+              }}
+              error={passwordErrors.confirmarSenha}
+            />
+          </ScrollView>
+
+          <View style={styles.passwordFooter}>
+            <PillButton
+              label="Alterar senha"
+              variant="filled"
+              fullWidth
+              onPress={handleChangePassword}
+              disabled={isChangingPassword}
+            />
+          </View>
         </View>
       )}
 
@@ -479,11 +584,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: Colors.primaryLight,
   },
-  placeholderContainer: {
+  passwordScrollView: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: Colors.primaryLight,
+  },
+  passwordContent: {
     paddingHorizontal: Spacing.screenHorizontal,
-    paddingBottom: Spacing.footerHeight,
+    paddingTop: Spacing.lg,
+    paddingBottom: Layout.formBottomPadding,
+  },
+  passwordFooter: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: Spacing.footerHeight,
+    backgroundColor: Colors.primaryLight,
+    paddingHorizontal: Spacing.screenHorizontal,
+    justifyContent: 'center',
   },
 });
