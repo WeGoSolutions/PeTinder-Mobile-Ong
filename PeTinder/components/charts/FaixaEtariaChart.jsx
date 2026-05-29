@@ -1,4 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { BarChart } from 'react-native-gifted-charts';
 import { colors, scaleWidth, scaleHeight, scaleFont } from '../../constants/theme';
 
@@ -6,6 +7,14 @@ import { colors, scaleWidth, scaleHeight, scaleFont } from '../../constants/them
  * Bar chart showing distribution by age group
  */
 export default function FaixaEtariaChart({ data = [] }) {
+    const [tooltip, setTooltip] = useState({ visible: false, text: '' });
+
+    useEffect(() => {
+        if (!tooltip.visible) return;
+        const t = setTimeout(() => setTooltip({ visible: false, text: '' }), 1500);
+        return () => clearTimeout(t);
+    }, [tooltip.visible]);
+
     if (!data || data.length === 0) {
         return (
             <View style={styles.container}>
@@ -24,10 +33,17 @@ export default function FaixaEtariaChart({ data = [] }) {
 
     const barData = data.map((item) => ({
         value: item.quantidade,
-        label: item.faixaEtaria || 'N/A',
         frontColor: faixaColors[item.faixaEtaria] || colors.mauve,
         topLabelComponent: () => (
             <Text style={styles.barLabel}>{item.quantidade.toLocaleString('pt-BR')}</Text>
+        ),
+        labelComponent: () => (
+            <Pressable
+                onLongPress={() => setTooltip({ visible: true, text: item.faixaEtaria || 'N/A' })}
+                android_ripple={{ color: 'transparent' }}
+            >
+                <Text style={styles.xAxisText} numberOfLines={1} ellipsizeMode="tail">{item.faixaEtaria || 'N/A'}</Text>
+            </Pressable>
         ),
     }));
 
@@ -52,6 +68,11 @@ export default function FaixaEtariaChart({ data = [] }) {
                     height={scaleHeight(150)}
                     isAnimated
                 />
+                {tooltip.visible && (
+                    <View style={styles.tooltip} pointerEvents="none">
+                        <Text style={styles.tooltipText}>{tooltip.text}</Text>
+                    </View>
+                )}
             </View>
         </View>
     );
@@ -104,5 +125,20 @@ const styles = StyleSheet.create({
         opacity: 0.5,
         textAlign: 'center',
         paddingVertical: scaleHeight(20),
+    },
+    tooltip: {
+        position: 'absolute',
+        bottom: scaleHeight(60),
+        alignSelf: 'center',
+        backgroundColor: colors.black,
+        paddingHorizontal: scaleWidth(10),
+        paddingVertical: scaleHeight(6),
+        borderRadius: 6,
+        zIndex: 10,
+    },
+    tooltipText: {
+        color: colors.white,
+        fontSize: scaleFont(11),
+        fontFamily: 'Poppins_500Medium',
     },
 });

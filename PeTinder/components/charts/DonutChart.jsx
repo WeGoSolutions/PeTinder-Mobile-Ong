@@ -9,8 +9,8 @@ import { colors, typography, scaleWidth, scaleHeight, scaleFont } from '../../co
  * @param {number} adoptedCount - Number of adopted pets
  * @param {number} notAdoptedCount - Number of non-adopted pets
  */
-export default function DonutChart({ 
-  adoptedCount = 0, 
+export default function DonutChart({
+  adoptedCount = 0,
   notAdoptedCount = 0,
   resetSignal = 0,
 }) {
@@ -32,12 +32,12 @@ export default function DonutChart({
       {
         key: 'adopted',
         value: adoptedValue,
-        color: selectedSlice && selectedSlice !== 'adopted' ? '#E2447699' : colors.primaryPink,
+        color: selectedSlice && selectedSlice !== 'adopted' ? '#80465D99' : '#80465D',
       },
       {
         key: 'notAdopted',
         value: notAdoptedValue,
-        color: selectedSlice && selectedSlice !== 'notAdopted' ? '#80465D99' : '#80465D',
+        color: selectedSlice && selectedSlice !== 'notAdopted' ? '#E2447699' : colors.primaryPink,
       },
     ];
   }, [selectedSlice, adoptedCount, notAdoptedCount, total]);
@@ -62,7 +62,7 @@ export default function DonutChart({
   return (
     <Pressable style={styles.container} onPress={() => setSelectedSlice(null)}>
       <Text style={styles.title}>Quantidade de pets adotados</Text>
-      
+
       <View style={styles.chartContainer}>
         <Pressable
           style={styles.chartWrapper}
@@ -84,7 +84,7 @@ export default function DonutChart({
             showText={false}
           />
         </Pressable>
-        
+
         <View style={styles.legendContainer}>
           <Pressable
             style={styles.legendItem}
@@ -93,12 +93,12 @@ export default function DonutChart({
               setSelectedSlice('adopted');
             }}
           >
-            <View style={[styles.legendDot, { backgroundColor: colors.primaryPink }]} />
+            <View style={[styles.legendDot, { backgroundColor: "#80465D" }]} />
             <Text style={[styles.legendText, selectedSlice === 'adopted' && styles.legendTextActive]}>
               Adotados
             </Text>
           </Pressable>
-          
+
           <Pressable
             style={styles.legendItem}
             onPress={(event) => {
@@ -106,7 +106,7 @@ export default function DonutChart({
               setSelectedSlice('notAdopted');
             }}
           >
-            <View style={[styles.legendDot, { backgroundColor: '#80465D' }]} />
+            <View style={[styles.legendDot, { backgroundColor: colors.primaryPink }]} />
             <Text style={[styles.legendText, selectedSlice === 'notAdopted' && styles.legendTextActive]}>
               Não adotados
             </Text>
@@ -119,15 +119,22 @@ export default function DonutChart({
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: scaleWidth(20),
-    paddingVertical: scaleHeight(16),
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: scaleWidth(16),
+    marginHorizontal: scaleWidth(16),
+    marginBottom: scaleHeight(16),
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
   },
   title: {
-    fontSize: scaleFont(typography.fontSize.title),
-    fontFamily: typography.fontFamily.poppins.medium,
-    fontWeight: '500',
+    fontSize: scaleFont(15),
+    fontFamily: 'Poppins_600SemiBold',
     color: colors.black,
-    marginBottom: scaleHeight(16),
+    marginBottom: scaleHeight(12),
   },
   chartContainer: {
     flexDirection: 'row',

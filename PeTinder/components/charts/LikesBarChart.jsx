@@ -108,7 +108,7 @@ export default function LikesBarChart({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={!homeChart ? styles.container : styles.containerHome}>
       {!homeChart && (
         <Text style={styles.title}>Pets mais curtidos</Text>
       )}
@@ -166,16 +166,27 @@ export default function LikesBarChart({
 }
 
 const styles = StyleSheet.create({
-  container: {
+  containerHome: {
     paddingHorizontal: scaleWidth(20),
     paddingVertical: scaleHeight(16),
   },
+  container: {
+    backgroundColor: colors.white,
+    borderRadius: 12,
+    padding: scaleWidth(16),
+    marginHorizontal: scaleWidth(16),
+    marginBottom: scaleHeight(16),
+    shadowColor: colors.black,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
   title: {
-    fontSize: scaleFont(typography.fontSize.title),
-    fontFamily: typography.fontFamily.poppins.medium,
-    fontWeight: '500',
+    fontSize: scaleFont(15),
+    fontFamily: 'Poppins_600SemiBold',
     color: colors.black,
-    marginBottom: scaleHeight(24),
+    marginBottom: scaleHeight(12),
   },
   chartContainer: {
     alignItems: 'center',
