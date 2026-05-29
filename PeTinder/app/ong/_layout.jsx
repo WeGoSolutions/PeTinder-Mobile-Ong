@@ -263,9 +263,9 @@ const styles = StyleSheet.create({
         gap: 16
     },
     headerName: {
-        fontSize: 22,
+        fontSize: 20,
         color: colors.textStrong,
-        fontWeight: '600',
+        fontFamily: 'Poppins_600SemiBold',
         marginTop: 2,
     },
     avatarContainer: {
