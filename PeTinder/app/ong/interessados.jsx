@@ -159,6 +159,7 @@ const styles = StyleSheet.create({
         fontWeight: '700',
         color: '#1A1A1A',
         marginBottom: 8,
+        fontFamily: 'Poppins_600SemiBold',
     },
     subtitle: {
         fontSize: 14,

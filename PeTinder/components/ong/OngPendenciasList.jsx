@@ -118,16 +118,22 @@ export default function OngPendenciasList({ pets = [] }) {
 
 const styles = StyleSheet.create({
     container: {
-        paddingHorizontal: scaleWidth(20),
-        paddingTop: scaleHeight(8),
-        paddingBottom: scaleHeight(6),
+        backgroundColor: colors.white,
+        borderRadius: 12,
+        padding: scaleWidth(16),
+        marginHorizontal: scaleWidth(16),
+        marginBottom: scaleHeight(16),
+        shadowColor: colors.black,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+        elevation: 3,
     },
     title: {
-        fontSize: scaleFont(typography.fontSize.title),
-        fontFamily: typography.fontFamily.poppins.medium,
-        fontWeight: '500',
+        fontSize: scaleFont(18),
+        fontFamily: 'Poppins_600SemiBold',
         color: colors.black,
-        marginBottom: scaleHeight(14),
+        marginBottom: scaleHeight(12),
     },
     listShell: {
         maxHeight: scaleHeight(330),
@@ -144,7 +150,7 @@ const styles = StyleSheet.create({
     card: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#D5CBD0',
+        backgroundColor: colors.roseSurface,
         borderRadius: scaleWidth(10),
         paddingHorizontal: scaleWidth(14),
         paddingVertical: scaleHeight(14),

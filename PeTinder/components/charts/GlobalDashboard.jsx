@@ -63,7 +63,7 @@ export default function GlobalDashboard() {
                     color="#4CAF50"
                 />
                 <KpiCard
-                    label="Tempo Médio (dias)"
+                    label="Tempo Médio de Adoção"
                     value={kpis?.tempoMedioAdocao}
                     suffix=" dias"
                     color="#FF9800"
