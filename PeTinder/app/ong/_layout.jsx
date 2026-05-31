@@ -50,7 +50,7 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
                 return;
             }
 
-            const imageUrl = await getOngImage(ongId);
+            const imageUrl = await getOngImage(ongId).catch(() => null);
             setSessionImageUri(resolveImageUri(imageUrl));
         } catch (error) {
             setSessionImageUri(null);

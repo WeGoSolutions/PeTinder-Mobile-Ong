@@ -65,8 +65,8 @@ export const ColumnRatio = {
 export const Sizes = {
   avatar: 90,
   avatarIcon: 40,
-  cameraBadge: 24,
-  cameraIcon: 14,
+  cameraBadge: 90,
+  cameraIcon: 40,
   buttonMinHeight: 44,
   touchMinSize: 44,
   tabUnderline: 2,

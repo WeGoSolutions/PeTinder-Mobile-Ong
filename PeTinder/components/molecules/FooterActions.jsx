@@ -27,11 +27,11 @@ export default function FooterActions({ mode, onLogout, onCancel, onSave }) {
       ) : (
         <View style={styles.editRow}>
           <View style={styles.buttonColumn}>
-            <PillButton label="Cancelar" variant="outline" onPress={onCancel} fullWidth />
+            <PillButton label="Cancelar" variant="outline" onPress={() => {onCancel?.(); }} fullWidth />
           </View>
 
           <View style={styles.buttonColumn}>
-            <PillButton label="Salvar" variant="filled" onPress={onSave} fullWidth />
+            <PillButton label="Salvar" variant="filled" onPress={() => { onSave?.(); }} fullWidth />
           </View>
         </View>
       )}
