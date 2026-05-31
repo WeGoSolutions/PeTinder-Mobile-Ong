@@ -91,7 +91,7 @@ const getStringParam = (value) => {
 export default function Chat() {
     const insets = useSafeAreaInsets();
     const router = useRouter();
-    const { userId: targetUserId, userName: targetUserName, backTo } = useLocalSearchParams();
+    const { userId: targetUserId, userName: targetUserName, petId, petName, backTo } = useLocalSearchParams();
     const [messages, setMessages] = useState([]);
     const [messageText, setMessageText] = useState('');
     const [isSending, setIsSending] = useState(false);
@@ -120,7 +120,7 @@ export default function Chat() {
     const isRecordPressActiveRef = useRef(false);
     const isRecordStartInProgressRef = useRef(false);
 
-    const chatId = buildDirectChatId(currentOngId, targetUserId);
+    const chatId = buildDirectChatId(currentOngId, targetUserId, petId);
 
     const displayedMessages = messages.map((msg) => ({
         ...msg,

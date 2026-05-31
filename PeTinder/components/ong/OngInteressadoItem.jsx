@@ -28,6 +28,7 @@ export default function OngInteressadoItem({
             params: {
                 userId: String(userId ?? ''),
                 petId: String(petId ?? ''),
+                petName: String(petNome ?? ''),
                 userName: String(displayName),
                 backTo: '/ong/interessados',
             },
