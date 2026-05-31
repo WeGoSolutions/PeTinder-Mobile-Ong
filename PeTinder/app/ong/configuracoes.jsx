@@ -291,7 +291,6 @@ export default function ConfiguracoesRoute() {
   }, [isSaving, savedData, savedImageUri]);
 
   const handleSave = useCallback(async () => {
-    console.log('ConfiguracoesRoute: handleSave invoked', { isSaving, isLoading, formData });
     if (isSaving || isLoading) {
       return;
     }
