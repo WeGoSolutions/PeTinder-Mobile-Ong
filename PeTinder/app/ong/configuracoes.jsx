@@ -24,8 +24,8 @@ import GenericModal from '../../components/GenericModal';
 import PillButton from '../../components/atoms/PillButton';
 import SwipeBackGesture from '../../components/SwipeBackGesture';
 
-const MAIN_TABS = ['Conta', 'Segurança'];
-const SUB_TABS = ['Informações Pessoais', 'Endereço'];
+const MAIN_TABS = ['Conta'];
+const SUB_TABS = ['Informações da Ong', 'Endereço'];
 
 const EMPTY_PROFILE = {
   id: '',
@@ -183,6 +183,7 @@ export default function ConfiguracoesRoute() {
 
   useEffect(() => {
     loadProfile();
+    setIsEditMode(false);
   }, [loadProfile]);
 
   useEffect(
@@ -295,6 +296,7 @@ export default function ConfiguracoesRoute() {
     }
 
     if (!validateForm()) {
+      showToast('Atenção', 'Por favor corrija os campos do formulário antes de salvar.', 'warning');
       return;
     }
 

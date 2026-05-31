@@ -80,6 +80,8 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: Spacing.xs,
     bottom: Spacing.xs,
+    left: 0,
+    top: 0,
     width: Sizes.cameraBadge,
     height: Sizes.cameraBadge,
     borderRadius: Radius.avatar,
