@@ -84,7 +84,9 @@ function OngHeader({ ongName = DEFAULT_ONG_NAME, ongImageUri = DEFAULT_ONG_IMAGE
                         <Ionicons name="business-outline" size={20} color={colors.mauve} />
                     )}
                 </View>
-                <Text style={styles.headerName}>Olá, {displayName}!</Text>
+                <Text style={styles.headerName} numberOfLines={1} ellipsizeMode="tail">
+                    Olá, {displayName}!
+                </Text>
             </View>
             <Pressable
                 style={styles.settingsButton}
@@ -129,7 +131,9 @@ function SecondaryHeader({ title, backTo }) {
                 <Ionicons name="chevron-back" size={28} color={colors.black} />
             </Pressable>
 
-            <Text style={styles.headerName}>{title}</Text>
+            <Text style={styles.headerName} numberOfLines={1} ellipsizeMode="tail">
+                {title}
+            </Text>
 
             <View style={styles.headerRightSpacer} />
         </View>
@@ -259,16 +263,19 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
     },
     headerContainer: {
+        flex: 1,
         flexDirection: 'row',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         alignItems: 'center',
-        gap: 16
+        gap: 16,
+        marginRight: 12,
     },
     headerName: {
         fontSize: 20,
         color: colors.textStrong,
         fontFamily: 'Poppins_600SemiBold',
         marginTop: 2,
+        flexShrink: 1,
     },
     avatarContainer: {
         width: 42,
@@ -300,9 +307,5 @@ const styles = StyleSheet.create({
     headerRightSpacer: {
         width: 44,
         height: 44,
-    },
-    avatarImage: {
-        width: '100%',
-        height: '100%',
     },
 });

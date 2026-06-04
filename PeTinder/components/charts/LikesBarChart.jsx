@@ -113,11 +113,11 @@ export default function LikesBarChart({
         <Text style={styles.title}>Pets mais curtidos</Text>
       )}
 
-      {sortedPets.length === 0 || sortedPets.every(p => p.likes === 0) ? (
+      {sortedPets.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Ionicons name="heart-dislike-outline" size={32} color={colors.mauve} />
+          <Ionicons name="paw-outline" size={32} color={colors.mauve} />
           <Text style={styles.emptyText}>
-            Infelizmente, nenhum pet recebeu uma curtida
+            Nenhum pet cadastrado ainda
           </Text>
         </View>
       ) : (

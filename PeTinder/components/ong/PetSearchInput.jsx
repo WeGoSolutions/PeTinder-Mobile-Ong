@@ -1,7 +1,8 @@
-import { Image, Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../../constants/theme';
 import { usePathname, useRouter } from 'expo-router';
+import PlusIcon from '../../assets/plus.svg';
 
 export default function PetSearchInput({
     value,
@@ -49,11 +50,7 @@ export default function PetSearchInput({
                     accessibilityRole="button"
                     accessibilityLabel="Adicionar pet"
                 >
-                    <Image
-                        source={require('../../assets/plus.svg')}
-                        style={styles.plusIcon}
-                        resizeMode="contain"
-                    />
+                    <PlusIcon width={28} height={28} />
                 </Pressable>
             </View>
         </View>

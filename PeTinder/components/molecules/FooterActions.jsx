@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Sizes, Spacing } from '../../theme';
 import PillButton from '../atoms/PillButton';
 
@@ -15,8 +16,17 @@ import PillButton from '../atoms/PillButton';
  * @param {FooterActionsProps} props
  */
 export default function FooterActions({ mode, onLogout, onCancel, onSave }) {
+  const insets = useSafeAreaInsets();
+
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        // Soma o inset inferior (barra de gestos/home indicator) para os botoes
+        // nao ficarem colados na borda do celular.
+        { height: Spacing.footerHeight + insets.bottom, paddingBottom: insets.bottom },
+      ]}
+    >
       {mode === 'view' ? (
         <PillButton
           label="Sair da conta"

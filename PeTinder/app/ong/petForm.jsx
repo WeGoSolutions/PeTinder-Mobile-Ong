@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { colors } from '../../constants/theme';
 import PetFormInput from '../../components/ong/PetFormInput';
@@ -45,6 +46,7 @@ const getStringParam = (value) => {
 export default function PetForm() {
     const { mode, petId, nome: paramNome, idade: paramIdade, porte: paramPorte, tags: paramTags, descricao: paramDescricao, isCastrado: paramIsCastrado, isVermifugo: paramIsVermifugo, isVacinado: paramIsVacinado, sexo: paramSexo, imageUrls: paramImageUrls, from: paramFrom, backTo: paramBackTo } = useLocalSearchParams();
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const normalizedMode = typeof mode === 'string' ? mode.trim().toLowerCase() : '';
     const isEdit = normalizedMode === 'edit';
     const resolvedPetId = typeof petId === 'string' ? petId.trim() : '';
@@ -391,7 +393,7 @@ export default function PetForm() {
 
     return (
         <SwipeBackGesture onSwipeBack={handleGestureBack}>
-            <ScrollView contentContainerStyle={styles.container}>
+            <ScrollView contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 24 }]}>
                 <View style={styles.section}>
                     <PetFormInput
                         label="Nome do Pet"

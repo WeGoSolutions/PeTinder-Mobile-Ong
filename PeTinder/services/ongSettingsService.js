@@ -1,6 +1,7 @@
 import api from '../api';
 import mockData from '../data/db.json';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system/legacy';
 
 const useBackend = String(process.env.EXPO_PUBLIC_UTILIZAR_BACKEND ?? '').toLowerCase() === 'true';
 const ONG_IMAGE_CACHE_PREFIX = 'ong_image_cache:';
@@ -44,18 +45,53 @@ const getCachedOngImage = async (ongId) => {
   }
 };
 
-const saveCachedOngImage = async (ongId, imageDataUrl) => {
+const saveCachedOngImage = async (ongId, imageUri) => {
   const normalizedOngId = trimOrEmpty(String(ongId ?? ''));
-  const normalizedImageDataUrl = trimOrEmpty(imageDataUrl);
+  const normalizedImageUri = trimOrEmpty(imageUri);
 
-  if (!normalizedOngId || !normalizedImageDataUrl) {
+  if (!normalizedOngId || !normalizedImageUri) {
     return;
   }
 
   try {
-    await AsyncStorage.setItem(getOngImageCacheKey(normalizedOngId), normalizedImageDataUrl);
+    await AsyncStorage.setItem(getOngImageCacheKey(normalizedOngId), normalizedImageUri);
   } catch (error) {
     // O cache local nao deve bloquear o fluxo de salvamento do perfil.
+  }
+};
+
+// Persiste a imagem como ARQUIVO no diretorio do app e devolve a URI do arquivo.
+// Guardar base64 grande direto no AsyncStorage estoura o limite por linha no
+// Android ("Row too big to fit into CursorWindow") e falha em silencio — por
+// isso a imagem "nao aparecia". Salvando em arquivo, o AsyncStorage guarda so o
+// caminho (string pequena). Se algo falhar, devolve o data URL original como
+// fallback para ao menos funcionar na sessao atual.
+const saveOngImageToFile = async (ongId, imageDataUrl) => {
+  const dataUrlMatch = /^data:(image\/[\w.+-]+);base64,(.*)$/s.exec(imageDataUrl);
+
+  if (!dataUrlMatch) {
+    // Nao e um data URL base64 (ja e uma uri de arquivo/remota): usa como esta.
+    return imageDataUrl;
+  }
+
+  const baseDir = FileSystem.documentDirectory || FileSystem.cacheDirectory;
+  if (!baseDir) {
+    return imageDataUrl;
+  }
+
+  try {
+    const mimeType = dataUrlMatch[1];
+    const base64 = dataUrlMatch[2];
+    const extension = (mimeType.split('/')[1] || 'jpg').split('+')[0];
+    const fileUri = `${baseDir}ong-avatar-${ongId}-${Date.now()}.${extension}`;
+
+    await FileSystem.writeAsStringAsync(fileUri, base64, {
+      encoding: FileSystem.EncodingType.Base64,
+    });
+
+    return fileUri;
+  } catch (error) {
+    return imageDataUrl;
   }
 };
 
@@ -164,10 +200,13 @@ export const updateOngImage = async (ongId, imageDataUrl) => {
     throw new Error('Imagem da ONG invalida.');
   }
 
-  await saveCachedOngImage(normalizedOngId, normalizedImageDataUrl);
+  // Salva a imagem em arquivo e guarda apenas o caminho (string pequena) no
+  // cache local — assim funciona com QUALQUER tamanho/tipo de imagem.
+  const persistedUri = await saveOngImageToFile(normalizedOngId, normalizedImageDataUrl);
+  await saveCachedOngImage(normalizedOngId, persistedUri);
 
   // Contorno temporario: upload no backend desativado para evitar erro 500.
-  return normalizedImageDataUrl;
+  return persistedUri;
 };
 
 export const updateOngProfile = async (ongId, profile, fallbackName = '') => {

@@ -248,7 +248,7 @@ export default function ConfiguracoesRoute() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,
@@ -269,9 +269,11 @@ export default function ConfiguracoesRoute() {
 
       const mimeType = String(asset?.mimeType ?? '').trim() || 'image/jpeg';
       const imageDataUrl = `data:${mimeType};base64,${imageBase64}`;
-      const previewUri = String(asset?.uri ?? '').trim() || imageDataUrl;
 
-      setProfileImageUri(previewUri);
+      // Preview imediato com o data URL (bytes reais da imagem). Renderiza de
+      // forma confiavel no iOS e Android, diferente da uri temporaria do picker
+      // (com allowsEditing) que as vezes nao aparecia ate salvar.
+      setProfileImageUri(imageDataUrl);
       setPendingImageDataUrl(imageDataUrl);
     } catch (error) {
       showToast('Erro', 'Não foi possível selecionar a imagem.', 'error');
