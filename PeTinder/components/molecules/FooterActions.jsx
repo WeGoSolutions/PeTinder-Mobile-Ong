@@ -37,7 +37,7 @@ export default function FooterActions({ mode, onLogout, onCancel, onSave }) {
       ) : (
         <View style={styles.editRow}>
           <View style={styles.buttonColumn}>
-            <PillButton label="Cancelar" variant="outline" onPress={() => {onCancel?.(); }} fullWidth />
+            <PillButton label="Cancelar" variant="outline" onPress={() => { onCancel?.(); }} fullWidth />
           </View>
 
           <View style={styles.buttonColumn}>
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: Spacing.footerHeight,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: '#ffdcea',
     paddingHorizontal: Spacing.screenHorizontal,
     justifyContent: 'center',
   },

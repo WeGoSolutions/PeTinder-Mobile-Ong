@@ -111,7 +111,7 @@ export default function TabBar({ tabs, activeIndex, onTabPress }) {
 
 const styles = StyleSheet.create({
   wrapper: {
-    backgroundColor: Colors.tabStrip,
+    backgroundColor: '#ffffff',
   },
   scrollContent: {
     paddingHorizontal: Spacing.screenHorizontal,

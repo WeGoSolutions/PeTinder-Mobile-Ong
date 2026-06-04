@@ -69,7 +69,7 @@ export default function FormSection({ fields, editable }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: '#ffdcea',
   },
   content: {
     paddingHorizontal: Spacing.screenHorizontal,

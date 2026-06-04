@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View, Text } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { Colors, Opacity, Radius, Sizes, Spacing } from '../../theme';
 
@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     width: Sizes.cameraBadge,
     height: Sizes.cameraBadge,
     borderRadius: Radius.avatar,
-    backgroundColor: Colors.surface,
+    backgroundColor: '#e9e9e985',
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -41,7 +41,7 @@ export default function UnderlineInput({
   isLink = false,
   secureTextEntry = false,
   error,
-}){
+}) {
   const displayValue = typeof value === 'string' ? value : '';
   const [toast, setToast] = useState({ visible: false, title: '', message: '', type: 'info' });
   const toastTimeoutRef = useRef(null);
@@ -85,7 +85,7 @@ export default function UnderlineInput({
 
   return (
     <View style={styles.container}>
-      <AppText variant="fieldLabel" secondary>
+      <AppText variant="fieldLabel">
         {label}
       </AppText>
 

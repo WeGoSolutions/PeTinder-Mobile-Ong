@@ -41,13 +41,9 @@ export default function ProfileHero({
       <View style={styles.content}>
         <AppText variant="greeting">Olá, {displayName}</AppText>
 
-        {isEditMode ? (
-          <AppText variant="fieldLabel" secondary>
-            Toque na imagem para alterar a foto da ONG
-          </AppText>
-        ) : (
+        {!isEditMode && (
           <View style={styles.buttonWrapper}>
-            <PillButton label="Editar Perfil" variant="outline" onPress={onEditPress} fullWidth />
+            <PillButton label="Editar Perfil" onPress={onEditPress} fullWidth />
           </View>
         )}
       </View>
@@ -57,7 +53,7 @@ export default function ProfileHero({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.primaryMid,
+    backgroundColor: '#ffdcea',
     minHeight: Layout.heroMinHeight,
     paddingHorizontal: Spacing.screenHorizontal,
     paddingVertical: Spacing.lg,
