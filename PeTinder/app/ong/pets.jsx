@@ -26,6 +26,13 @@ export default function Pets() {
         setIsModalVisible(true);
     };
 
+    // Remoção otimista: tira o pet da lista na hora em que é deletado, sem
+    // depender do re-fetch (que só refletia ao sair e voltar na aba).
+    const handlePetDeleted = useCallback((petId) => {
+        setPets((prev) => prev.filter((p) => String(p?.petId) !== String(petId)));
+        setTotalElements((prev) => Math.max(0, prev - 1));
+    }, []);
+
     const closePetModal = () => {
         setIsModalVisible(false);
         setSelectedPet(null);
@@ -173,6 +180,7 @@ export default function Pets() {
                 onClose={closePetModal}
                 pet={selectedPet}
                 onRefresh={fetchPets}
+                onDeleted={handlePetDeleted}
             />
         </ScrollView>
     );

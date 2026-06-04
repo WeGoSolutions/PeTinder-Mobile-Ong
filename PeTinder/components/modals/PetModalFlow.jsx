@@ -21,7 +21,7 @@ import InterestedUsersModal from './InterestedUsersModal';
 
 const ADOTANTE_EXTERNO_ID = '11111111-1111-1111-1111-111111111111';
 
-export default function PetModalFlow({ visible, pet, onClose, onRefresh }) {
+export default function PetModalFlow({ visible, pet, onClose, onRefresh, onDeleted }) {
     const router = useRouter();
     const [isStatusModalVisible, setIsStatusModalVisible] = useState(false);
     const [isAdotanteModalVisible, setIsAdotanteModalVisible] = useState(false);
@@ -61,11 +61,16 @@ export default function PetModalFlow({ visible, pet, onClose, onRefresh }) {
             return;
         }
 
+        const deletedPetId = pet.petId;
+
         try {
-            await deletarPet(pet.petId);
+            await deletarPet(deletedPetId);
+            // Remoção otimista: some da lista imediatamente. Não usamos onRefresh
+            // aqui (o re-fetch logo após o delete não estava atualizando a UI — só
+            // ao voltar na aba). O useFocusEffect re-sincroniza depois.
+            onDeleted?.(deletedPetId);
             showToast('Sucesso', 'Pet deletado com sucesso.', 'success');
             closeAll();
-            onRefresh();
         } catch (error) {
             showToast('Erro', 'Não foi possível deletar o pet.', 'error');
         }

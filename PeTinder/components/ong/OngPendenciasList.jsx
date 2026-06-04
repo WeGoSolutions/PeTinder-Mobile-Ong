@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { colors, scaleFont, scaleHeight, scaleWidth, typography } from '../../constants/theme';
 import { resolveImageUri } from '../../utils/imageUri';
 
@@ -97,19 +97,17 @@ export default function OngPendenciasList({ pets = [] }) {
                         <Text style={styles.emptyText}>Nenhum pet com pendencias no momento.</Text>
                     </View>
                 ) : (
-                    <ScrollView
-                        style={styles.scroll}
-                        contentContainerStyle={styles.scrollContent}
-                        showsVerticalScrollIndicator={true}
-                        nestedScrollEnabled={true}
-                    >
+                    // Lista inline (sem ScrollView interno). O ScrollView do dashboard
+                    // ja cuida da rolagem; um ScrollView com flex:1 dentro de um pai
+                    // so com maxHeight colapsava para altura 0 e escondia os cards.
+                    <View style={styles.list}>
                         {pets.map((pet, index) => (
                             <PendingPetCard
                                 key={String(pet?.id ?? `${pet?.name}-${index}`)}
                                 pet={pet}
                             />
                         ))}
-                    </ScrollView>
+                    </View>
                 )}
             </View>
         </View>
@@ -136,16 +134,10 @@ const styles = StyleSheet.create({
         marginBottom: scaleHeight(12),
     },
     listShell: {
-        maxHeight: scaleHeight(330),
         borderRadius: scaleWidth(10),
-        paddingRight: scaleWidth(2),
     },
-    scroll: {
-        flex: 1,
-    },
-    scrollContent: {
+    list: {
         gap: scaleHeight(14),
-        paddingBottom: scaleHeight(8),
     },
     card: {
         flexDirection: 'row',
