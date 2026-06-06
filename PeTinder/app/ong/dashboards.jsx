@@ -90,7 +90,7 @@ export default function Dashboards() {
 
                 <LikesBarChart
                     pets={pets}
-                    maxVisibleBars={6}
+                    maxVisibleBars={4}
                 />
 
                 <OngPendenciasList pets={pendingPets} />

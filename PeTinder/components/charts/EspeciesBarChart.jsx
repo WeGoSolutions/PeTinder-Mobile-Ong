@@ -68,6 +68,7 @@ export default function EspeciesBarChart({ data = [] }) {
                     maxValue={maxValue * 1.2}
                     height={scaleHeight(160)}
                     isAnimated
+                    showScrollIndicator
                 />
                 {tooltip.visible && (
                     <View style={styles.tooltip} pointerEvents="none">

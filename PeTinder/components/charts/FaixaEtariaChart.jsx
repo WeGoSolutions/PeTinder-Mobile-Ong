@@ -67,6 +67,7 @@ export default function FaixaEtariaChart({ data = [] }) {
                     maxValue={maxValue * 1.2}
                     height={scaleHeight(150)}
                     isAnimated
+                    showScrollIndicator
                 />
                 {tooltip.visible && (
                     <View style={styles.tooltip} pointerEvents="none">

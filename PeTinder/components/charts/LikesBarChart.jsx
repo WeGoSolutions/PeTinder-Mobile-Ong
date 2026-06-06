@@ -12,7 +12,7 @@ import { colors, typography, scaleWidth, scaleHeight, scaleFont, layout } from '
  */
 export default function LikesBarChart({
   pets = [],
-  maxVisibleBars = 6,
+  maxVisibleBars = 4,
   homeChart = false
 }) {
   const [selectedPetId, setSelectedPetId] = useState(null);
@@ -124,6 +124,7 @@ export default function LikesBarChart({
         <View style={styles.chartContainer}>
           <ScrollView
             horizontal
+            scrollEnabled={sortedPets.length > maxVisibleBars}
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={[
               styles.barsContainer,
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   scrollIndicatorContainer: {
-    width: '80%',
+    width: '100%',
     marginTop: scaleHeight(16),
     height: scaleHeight(6),
     justifyContent: 'center',
