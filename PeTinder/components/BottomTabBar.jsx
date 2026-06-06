@@ -2,9 +2,9 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, scaleHeight, scaleWidth, layout, iconSizes } from '../constants/theme';
 
-export default function BottomTabBar({ 
-  activeTab = 'chart', 
-  onTabPress 
+export default function BottomTabBar({
+  activeTab = 'chart',
+  onTabPress
 }) {
   const tabs = [
     { id: 'home', activeIcon: 'home', inactiveIcon: 'home-outline' },
@@ -17,15 +17,13 @@ export default function BottomTabBar({
     if (onTabPress) {
       onTabPress(tabId);
     }
-    // TODO: Add navigation logic when routes are implemented
-    console.log(`Tab pressed: ${tabId}`);
   };
 
   return (
     <View style={styles.container}>
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
-        
+
         return (
           <TouchableOpacity
             key={tab.id}
