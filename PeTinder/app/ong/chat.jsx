@@ -680,7 +680,14 @@ export default function Chat() {
                             </View>
                         }
                     />
-
+                    {isRecordingAudio && (
+                        <View style={styles.recordingHintRow}>
+                            <View style={styles.recordingDot} />
+                            <Text style={styles.recordingHintText}>
+                                Gravando... solte para enviar {formatAudioDuration(recordingAudioDurationMs)}
+                            </Text>
+                        </View>
+                    )}
                     <View style={[styles.inputContainer, { paddingBottom: insets.bottom || 8 }]}>
                         <Pressable
                             style={({ pressed }) => [
@@ -734,15 +741,6 @@ export default function Chat() {
                             )}
                         </Pressable>
                     </View>
-
-                    {isRecordingAudio && (
-                        <View style={styles.recordingHintRow}>
-                            <View style={styles.recordingDot} />
-                            <Text style={styles.recordingHintText}>
-                                Gravando... solte para enviar {formatAudioDuration(recordingAudioDurationMs)}
-                            </Text>
-                        </View>
-                    )}
 
                     <Modal
                         visible={isPendingImageVisible}
