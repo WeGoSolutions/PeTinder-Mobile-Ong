@@ -159,7 +159,8 @@ export default function OngTabsLayout() {
                         const petNameParam = getStringParam(route.params?.petName).trim();
                         const chatUserName = userNameParam.length > 0 ? userNameParam : 'Chat';
                         const chatTitle = petNameParam.length > 0 ? `${chatUserName} • ${petNameParam}` : chatUserName;
-                        return <SecondaryHeader title={chatTitle} />;
+                        const chatBackTo = getStringParam(route.params?.backTo).trim();
+                        return <SecondaryHeader title={chatTitle} backTo={chatBackTo} />;
                     }
                     if (route.name === 'petForm') {
                         const petFormMode = getStringParam(route.params?.mode).trim().toLowerCase();

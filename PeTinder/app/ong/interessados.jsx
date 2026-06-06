@@ -135,6 +135,7 @@ export default function Interessados() {
                                                 imageUrl={item.imageUrl}
                                                 userId={item.userId}
                                                 petId={item.petId}
+                                                goBackTo={'/ong/interessados'}
                                             />
                                         ))}
                                     </View>

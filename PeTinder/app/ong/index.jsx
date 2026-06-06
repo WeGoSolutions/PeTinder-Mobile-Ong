@@ -89,6 +89,7 @@ export default function Home() {
                                 imageUrl={interessado.imageUrl}
                                 userId={interessado.userId}
                                 petId={interessado.petId}
+                                goBackTo={'/ong'}
                             />
                         ))
                     )}

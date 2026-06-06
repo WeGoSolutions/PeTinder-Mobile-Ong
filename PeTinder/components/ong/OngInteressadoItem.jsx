@@ -12,6 +12,7 @@ export default function OngInteressadoItem({
     imageUrl,
     userId,
     petId,
+    goBackTo = '/ong/interessados'
 }) {
     const router = useRouter();
     const displayName = userName || 'Usuario';
@@ -30,7 +31,7 @@ export default function OngInteressadoItem({
                 petId: String(petId ?? ''),
                 petName: String(petNome ?? ''),
                 userName: String(displayName),
-                backTo: '/ong/interessados',
+                backTo: goBackTo,
             },
         });
     };
