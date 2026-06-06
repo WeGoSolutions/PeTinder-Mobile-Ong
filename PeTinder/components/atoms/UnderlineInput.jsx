@@ -43,6 +43,7 @@ export default function UnderlineInput({
   error,
 }) {
   const displayValue = typeof value === 'string' ? value : '';
+  const visibleValue = displayValue || 'Não cadastrado';
   const [toast, setToast] = useState({ visible: false, title: '', message: '', type: 'info' });
   const toastTimeoutRef = useRef(null);
 
@@ -106,12 +107,12 @@ export default function UnderlineInput({
           hitSlop={HIT_SLOP}
         >
           <AppText variant="fieldValue" color={Colors.link} style={styles.linkText}>
-            {displayValue}
+            {visibleValue}
           </AppText>
         </TouchableOpacity>
       ) : (
         <AppText variant="fieldValue" style={styles.valueText}>
-          {masked ? displayValue : displayValue}
+          {visibleValue}
         </AppText>
       )}
 

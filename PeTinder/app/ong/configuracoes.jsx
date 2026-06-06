@@ -45,6 +45,8 @@ const EMPTY_PROFILE = {
 
 const toDigits = (value) => String(value ?? '').replace(/\D/g, '');
 
+const formatStringValue = (value) => String(value ?? '').trim();
+
 const formatCepInput = (value) => {
   const digits = toDigits(value).slice(0, 8);
 
@@ -63,6 +65,56 @@ const maskCpf = (value) => {
   }
 
   return `***.${digits.slice(3, 9)}-**`;
+};
+
+const maskCnpj = (value) => {
+  const digits = toDigits(value);
+
+  if (digits.length < 14) {
+    return digits;
+  }
+
+  return `**.***.***/****-${digits.slice(12)}`;
+};
+
+const formatCpfInput = (value) => {
+  const digits = toDigits(value).slice(0, 11);
+
+  if (digits.length <= 3) {
+    return digits;
+  }
+
+  if (digits.length <= 6) {
+    return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  }
+
+  if (digits.length <= 9) {
+    return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  }
+
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+};
+
+const formatCnpjInput = (value) => {
+  const digits = toDigits(value).slice(0, 14);
+
+  if (digits.length <= 2) {
+    return digits;
+  }
+
+  if (digits.length <= 5) {
+    return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+  }
+
+  if (digits.length <= 8) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+  }
+
+  if (digits.length <= 12) {
+    return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+  }
+
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
 };
 
 const normalizeLinkValue = (value) => {
@@ -110,6 +162,7 @@ export default function ConfiguracoesRoute() {
   const [toast, setToast] = useState({ visible: false, title: '', message: '', type: 'info' });
   const [isLogoutModalVisible, setIsLogoutModalVisible] = useState(false);
   const toastTimeoutRef = useRef(null);
+  const lastCepLookupRef = useRef('');
 
   const showToast = useCallback((title, message, type = 'info', duration = 2400) => {
     if (toastTimeoutRef.current) {
@@ -129,9 +182,13 @@ export default function ConfiguracoesRoute() {
       const nextValue =
         field === 'cep'
           ? formatCepInput(value)
-          : field === 'uf'
-            ? String(value ?? '').toUpperCase().slice(0, 2)
-            : value;
+          : field === 'cpf'
+            ? formatCpfInput(value)
+            : field === 'cnpj'
+              ? formatCnpjInput(value)
+              : field === 'uf'
+                ? String(value ?? '').toUpperCase().slice(0, 2)
+                : value;
 
       return {
         ...prev,
@@ -165,6 +222,8 @@ export default function ConfiguracoesRoute() {
       const merged = {
         ...EMPTY_PROFILE,
         ...profile,
+        cpf: formatCpfInput(profile?.cpf),
+        cnpj: formatCnpjInput(profile?.cnpj),
       };
 
       const normalizedImageUri = resolveImageUri(imageUrl);
@@ -194,6 +253,57 @@ export default function ConfiguracoesRoute() {
     },
     []
   );
+
+  useEffect(() => {
+    if (!isEditMode) {
+      lastCepLookupRef.current = '';
+      return;
+    }
+
+    const cepDigits = toDigits(formData.cep);
+
+    if (cepDigits.length !== 8 || lastCepLookupRef.current === cepDigits) {
+      return;
+    }
+
+    let isCancelled = false;
+
+    const lookupCep = async () => {
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
+        const data = await response.json();
+
+        if (isCancelled) {
+          return;
+        }
+
+        if (!response.ok || data?.erro) {
+          lastCepLookupRef.current = '';
+          showToast('CEP não encontrado', 'Não foi possível localizar o endereço pelo CEP informado.', 'warning');
+          return;
+        }
+
+        lastCepLookupRef.current = cepDigits;
+        setFormData((prev) => ({
+          ...prev,
+          rua: formatStringValue(data?.logradouro),
+          cidade: formatStringValue(data?.localidade),
+          uf: formatStringValue(data?.uf).toUpperCase().slice(0, 2),
+        }));
+      } catch (error) {
+        if (!isCancelled) {
+          lastCepLookupRef.current = '';
+          showToast('Erro', 'Não foi possível consultar o ViaCEP.', 'error');
+        }
+      }
+    };
+
+    lookupCep();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [formData.cep, isEditMode, showToast]);
 
   const validateForm = useCallback(() => {
     const nextErrors = {};
@@ -323,7 +433,11 @@ export default function ConfiguracoesRoute() {
       }
 
       setFormData(updated);
-      setSavedData(updated);
+      setSavedData({
+        ...updated,
+        cpf: formatCpfInput(updated?.cpf),
+        cnpj: formatCnpjInput(updated?.cnpj),
+      });
       setProfileImageUri(nextImageUri);
       setSavedImageUri(nextImageUri);
       setPendingImageDataUrl('');
@@ -392,6 +506,9 @@ export default function ConfiguracoesRoute() {
     setActiveSubTab(index);
   }, []);
 
+  const canEditCpf = !toDigits(savedData.cpf);
+  const canEditCnpj = !toDigits(savedData.cnpj);
+
   const personalFields = useMemo(
     () => [
       {
@@ -408,8 +525,13 @@ export default function ConfiguracoesRoute() {
       },
       {
         label: 'CPF',
-        value: maskCpf(formData.cpf),
-        masked: true,
+        value: formData.cpf,
+        onChangeText: canEditCpf ? (text) => updateField('cpf', text) : undefined,
+      },
+      {
+        label: 'CNPJ',
+        value: formData.cnpj,
+        onChangeText: canEditCnpj ? (text) => updateField('cnpj', text) : undefined,
       },
       {
         label: 'Link de contato',
@@ -419,7 +541,7 @@ export default function ConfiguracoesRoute() {
         error: errors.link,
       },
     ],
-    [errors.email, errors.link, errors.nome, formData.cpf, formData.email, formData.link, formData.nome, isEditMode, updateField]
+    [canEditCnpj, canEditCpf, errors.email, errors.link, errors.nome, formData.cnpj, formData.cpf, formData.email, formData.link, formData.nome, isEditMode, updateField]
   );
 
   const addressFields = useMemo(
