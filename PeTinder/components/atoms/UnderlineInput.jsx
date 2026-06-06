@@ -26,6 +26,8 @@ const HIT_SLOP = {
  * @property {boolean} [masked]
  * @property {boolean} [isLink]
  * @property {boolean} [secureTextEntry]
+ * @property {string} [keyboardType]
+ * @property {number} [maxLength]
  * @property {string} [error]
  */
 
@@ -40,6 +42,8 @@ export default function UnderlineInput({
   masked = false,
   isLink = false,
   secureTextEntry = false,
+  keyboardType,
+  maxLength,
   error,
 }) {
   const displayValue = typeof value === 'string' ? value : '';
@@ -96,6 +100,8 @@ export default function UnderlineInput({
           value={displayValue}
           onChangeText={onChangeText}
           secureTextEntry={secureTextEntry}
+          keyboardType={keyboardType}
+          maxLength={maxLength}
           placeholderTextColor={Colors.textSecondary}
         />
       ) : showLink ? (
