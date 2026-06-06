@@ -28,7 +28,7 @@ export default function Dashboards() {
                 onPress={() => setActiveTab('petinder')}
             >
                 <Text style={[styles.tabText, activeTab === 'petinder' && styles.activeTabText]}>
-                    Dados Petinder
+                    Dados PeTinder
                 </Text>
             </TouchableOpacity>
             <TouchableOpacity

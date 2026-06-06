@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   title: {
-    fontSize: scaleFont(15),
+    fontSize: scaleFont(18),
     fontFamily: 'Poppins_600SemiBold',
     color: colors.black,
     marginBottom: scaleHeight(12),

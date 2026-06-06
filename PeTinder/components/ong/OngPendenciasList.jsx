@@ -89,12 +89,12 @@ const PendingPetCard = ({ pet }) => {
 export default function OngPendenciasList({ pets = [] }) {
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Pets com pendencias</Text>
+            <Text style={styles.title}>Pets com pendências</Text>
 
             <View style={styles.listShell}>
                 {pets.length === 0 ? (
                     <View style={styles.emptyContainer}>
-                        <Text style={styles.emptyText}>Nenhum pet com pendencias no momento.</Text>
+                        <Text style={styles.emptyText}>Nenhum pet com pendências no momento.</Text>
                     </View>
                 ) : (
                     // Lista inline (sem ScrollView interno). O ScrollView do dashboard
