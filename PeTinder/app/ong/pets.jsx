@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../constants/theme';
 import PetSearchInput from '../../components/ong/PetSearchInput';
 import PetCard from '../../components/ong/PetCard';
@@ -11,6 +12,7 @@ import { resolveImageUri } from '../../utils/imageUri';
 
 
 export default function Pets() {
+    const insets = useSafeAreaInsets();
     const { refresh } = useLocalSearchParams();
     const [search, setSearch] = useState('');
     const [pets, setPets] = useState([]);
@@ -100,7 +102,7 @@ export default function Pets() {
         return pets.filter((pet) => String(pet?.petNome ?? '').toLowerCase().includes(term));
     }, [search, pets]);
 
-    const shouldShowPagination = totalElements > 15 && totalPages > 1;
+    const shouldShowPagination = totalPages > 1;
 
     const handlePreviousPage = () => {
         setCurrentPage((prev) => Math.max(0, prev - 1));
@@ -111,7 +113,7 @@ export default function Pets() {
     };
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
+        <ScrollView contentContainerStyle={[styles.container, { paddingBottom: insets.bottom + 16 }]}>
             <PetSearchInput
                 value={search}
                 onChangeText={setSearch}
@@ -149,6 +151,8 @@ export default function Pets() {
                     <Text style={styles.emptyState}>Nenhum pet encontrado.</Text>
                 )}
             </View>
+
+            <View style={styles.paginationSpacer} />
 
             {shouldShowPagination ? (
                 <View style={styles.paginationContainer}>
@@ -210,6 +214,10 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         rowGap: 10,
     },
+    paginationSpacer: {
+        flexGrow: 1,
+        minHeight: 16,
+    },
     cardCell: {
         width: '48%',
     },
@@ -232,7 +240,6 @@ const styles = StyleSheet.create({
     },
     paginationContainer: {
         marginTop: 14,
-        marginBottom: 8,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
