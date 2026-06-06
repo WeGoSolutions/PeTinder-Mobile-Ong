@@ -108,7 +108,7 @@ export default function Home() {
                 <Text style={styles.title}>Pets mais curtidos</Text>
                 <LikesBarChart
                     pets={pets}
-                    maxVisibleBars={6}
+                    maxVisibleBars={4}
                     homeChart={true}
                 />
             </View>
